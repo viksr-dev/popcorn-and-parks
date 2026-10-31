@@ -140,6 +140,8 @@ button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
 .card .title h3 { overflow-wrap: anywhere; }
 .meta { display: flex; gap: 4px 12px; flex-wrap: wrap; color: var(--muted); font-size: 0.84rem; }
 .notes { margin: 0; color: var(--muted); font-size: 0.9rem; overflow-wrap: anywhere; }
+.trail-map summary { cursor: pointer; color: var(--accent, #f5c451); font-size: 0.9rem; font-weight: 600; }
+.trail-map img { display: block; width: 100%; max-width: 520px; height: auto; margin-top: 8px; border-radius: 10px; }
 .tag { display: inline-flex; align-items: center; gap: 6px; font-size: 0.72rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: color-mix(in srgb, currentColor 14%, transparent); }
 .tag.parks { color: var(--parks); } .tag.kids { color: var(--kids); } .tag.together { color: var(--together); }
 .tag.date { color: var(--accent-ink); }
@@ -688,6 +690,7 @@ function renderActs() {
       <div class="title"><h3>${esc(a.name)}</h3><span class="tag ${esc(a.category)}">${esc(CATS[a.category] || "Other")}</span>${planned ? `<span class="tag date">${esc(fmtDate(a.plannedFor))}</span>` : ""}</div>
       ${a.cost || a.where ? `<div class="meta">${a.cost ? `<span><strong>Cost</strong> ${esc(a.cost)}</span>` : ""}${a.where ? `<span><strong>Where</strong> ${esc(a.where)} <a class="map-link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(a.where)}" target="_blank" rel="noopener">Map ↗</a></span>` : ""}</div>` : ""}
       ${a.notes ? `<p class="notes">${esc(a.notes)}</p>` : ""}
+      ${/^maps\/[\w.-]+\.(jpg|png|webp)$/.test(a.image || "") ? `<details class="trail-map"><summary>Trail map</summary><a href="${esc(a.image)}" target="_blank" rel="noopener"><img src="${esc(a.image)}" alt="Trail map for ${esc(a.name)}" loading="lazy"></a></details>` : ""}
       <div class="votes">${votesHtml("acts", a)}</div>
       </div>
       <div class="full" style="display:grid;gap:10px">
