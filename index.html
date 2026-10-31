@@ -380,7 +380,8 @@ button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
       <div class="grp"><span class="label">Genres</span><div class="chips" id="t-genres" role="group" aria-label="Genres"></div></div>
       <div class="grp"><span class="label">How long have you got?</span><div class="chips" id="t-time" role="group" aria-label="Running time"></div></div>
       <div class="grp" id="t-who-grp"><span class="label">Who's watching?</span><div class="chips" id="t-who" role="group" aria-label="Who's watching"></div></div>
-      <div class="opts"><label class="check"><input type="checkbox" id="t-kids"> Kids are watching (G and PG only)</label><button type="button" class="ghost small" data-act="t-clear">Clear choices</button></div>
+      <div class="grp"><span class="label">Who's it for?</span><div class="chips" id="t-aud" role="group" aria-label="Age rating"></div></div>
+      <div class="opts"><button type="button" class="ghost small" data-act="t-clear">Clear choices</button></div>
       <div id="t-results"></div>
       <div id="t-liked"></div>
       <p class="source">Genres, running times, US ratings and related films from <a href="https://www.themoviedb.org/" target="_blank" rel="noopener">TMDB</a>.</p>
@@ -878,7 +879,10 @@ const MOODS = [
 ];
 const TIMES = [["any", "Any length", 0, 999], ["short", "Under 90 min", 0, 89], ["mid", "Under 2 hours", 0, 120], ["long", "Epic night (2½ h+)", 150, 999]];
 const T_PREFS = "popcorn-parks-tonight";
-const tonight = (() => { try { return { genres: [], moods: [], time: "any", who: [], kids: false, more: 0, ...JSON.parse(localStorage.getItem(T_PREFS) || "{}") }; } catch { return { genres: [], moods: [], time: "any", who: [], kids: false, more: 0 }; } })();
+const tonight = (() => {
+  const base = { genres: [], moods: [], time: "any", who: [], aud: "any", more: 0 };
+  try { const t = { ...base, ...JSON.parse(localStorage.getItem(T_PREFS) || "{}") }; if (t.kids) t.aud = "kids"; delete t.kids; return t; } catch { return base; }
+})();
 const saveTonight = () => { try { localStorage.setItem(T_PREFS, JSON.stringify({ ...tonight, more: 0 })); } catch {} };
 const dataFor = (title) => MOVIE_DATA[norm(title)];
 const KID_CERTS = new Set(["G", "PG"]);
@@ -886,7 +890,13 @@ const KID_CERTS = new Set(["G", "PG"]);
 const kidSafe = (d) => KID_CERTS.has(d.c) || KID_CERTS.has(d.nz) || ((!d.c || d.c === "NR") && (d.g || []).includes(10751));
 const fitsTime = (d) => { const t = TIMES.find((x) => x[0] === tonight.time) || TIMES[0]; return t[0] === "any" || (d.r && d.r >= t[2] && d.r <= t[3]); };
 const watchedKeys = () => new Set(state.movies.filter((m) => m.status === "watched").map((m) => norm(m.title)));
-const passes = (d, watched) => !watched.has(norm(d.t)) && (!tonight.kids || kidSafe(d)) && fitsTime(d);
+// Grown-ups: NZ M or higher when there's an NZ rating, otherwise US PG-13 or higher (usually M or above here).
+const NZ_MPLUS = new Set(["M", "R13", "R15", "R16", "R18", "R"]);
+const US_MPLUS = new Set(["PG-13", "R", "NC-17"]);
+const mPlus = (d) => (d.nz ? NZ_MPLUS.has(d.nz) : US_MPLUS.has(d.c));
+const AUDS = [["any", "Anyone"], ["kids", "Kids (G & PG)"], ["adult", "Grown-ups (M and above)"]];
+const fitsAud = (d) => (tonight.aud === "kids" ? kidSafe(d) : tonight.aud === "adult" ? mPlus(d) : true);
+const passes = (d, watched) => !watched.has(norm(d.t)) && fitsAud(d) && fitsTime(d);
 
 // How much each watcher likes each genre, from the films they voted for (and how those were rated once watched).
 function tasteFor(ids) {
@@ -949,7 +959,7 @@ function becauseLiked() {
 }
 function pickRow(d, why) {
   const m = { title: d.t, year: d.y, runtime: d.r };
-  const cert = d.c && d.c !== "NR" ? d.c : d.nz;
+  const cert = d.nz ? "NZ " + d.nz : d.c && d.c !== "NR" ? d.c : "";
   const sub = [d.y, d.r ? d.r + " min" : ""].filter(Boolean).join(" · ");
   return `<div class="chart-row norank">${poster(d.t, "sm")}<div class="what"><strong>${esc(d.t)}</strong><div class="sub"><span class="mono">${esc(sub)}</span>${cert ? ` <span class="cert ${kidSafe(d) ? "fam" : ""}">${esc(cert)}</span>` : ""} ${esc((d.g || []).slice(0, 3).map((x) => GENRES[x]).filter(Boolean).join(" · "))}</div>${why && why.length ? `<div class="why">${esc(why.join(" · "))}</div>` : ""}</div>${addButton(m)}${aboutPanel(m)}</div>`;
 }
@@ -963,23 +973,22 @@ function renderTonight() {
   const crew = crewSorted();
   $("#t-who-grp").hidden = !crew.length;
   $("#t-who").innerHTML = crew.map((c) => { const on = tonight.who.includes(c.id); return `<button type="button" class="vote" aria-pressed="${on}" data-act="t-who" data-who="${c.id}"><span class="dot" style="background:${esc(c.color)}">${initial(c.name)}</span>${esc(c.name)}</button>`; }).join("");
-  $("#t-kids").checked = tonight.kids;
+  $("#t-aud").innerHTML = AUDS.map(([k, l]) => `<button type="button" class="chip small" data-act="t-aud" data-a="${k}" aria-pressed="${tonight.aud === k}">${esc(l)}</button>`).join("");
 
   const picks = tonightPicks();
   const show = 12 + tonight.more * 12;
-  const chosen = tonight.genres.length || tonight.moods.length || tonight.time !== "any" || tonight.kids || tonight.who.length;
+  const chosen = tonight.genres.length || tonight.moods.length || tonight.time !== "any" || tonight.aud !== "any" || tonight.who.length;
   $("#t-results").innerHTML = picks.length
     ? `<p class="source">${picks.length} ${picks.length === 1 ? "film fits" : "films fit"}${chosen ? "" : ". Pick a mood or a few genres to narrow it down"}${tonight.who.length ? ", best matches for who's watching first" : ""}.</p>
        <div class="chart">${picks.slice(0, show).map((p) => pickRow(p.d, p.why)).join("")}</div>
        ${picks.length > show ? `<div class="tonight-foot"><button type="button" class="small" data-act="t-more">Show more</button></div>` : ""}`
-    : `<div class="empty"><p>Nothing fits all of that. Try fewer genres, a longer running time${tonight.kids ? " or switching off kids mode" : ""}.</p></div>`;
+    : `<div class="empty"><p>Nothing fits all of that. Try fewer genres, a longer running time${tonight.aud !== "any" ? " or a different age group" : ""}.</p></div>`;
 
   const liked = becauseLiked();
   $("#t-liked").innerHTML = liked.length
     ? liked.map(({ m, rel }) => `<div class="grp"><div class="liked-head"><h3>Because you liked ${esc(m.title)}</h3>${starsRead(m.rating)}</div><div class="chart">${rel.map((d) => pickRow(d)).join("")}</div></div>`).join("")
     : `<p class="source">Rate a film 4 or 5 stars after you watch it, and similar films will show up here.</p>`;
 }
-document.getElementById("t-kids").addEventListener("change", (e) => { tonight.kids = e.target.checked; tonight.more = 0; saveTonight(); renderTonight(); });
 document.addEventListener("click", (e) => {
   const b = e.target.closest("[data-act^='t-']"); if (!b) return;
   const tog = (arr, v) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
@@ -987,8 +996,9 @@ document.addEventListener("click", (e) => {
     case "t-mood": tonight.moods = tog(tonight.moods, b.dataset.id); break;
     case "t-genre": tonight.genres = tog(tonight.genres, b.dataset.g); break;
     case "t-time": tonight.time = b.dataset.t; break;
+    case "t-aud": tonight.aud = b.dataset.a; break;
     case "t-who": tonight.who = tog(tonight.who, b.dataset.who); break;
-    case "t-clear": Object.assign(tonight, { genres: [], moods: [], time: "any", who: [], kids: tonight.kids }); break;
+    case "t-clear": Object.assign(tonight, { genres: [], moods: [], time: "any", who: [] }); break;
     case "t-more": tonight.more++; renderTonight(); return;
     case "t-surprise": {
       const picks = tonightPicks().slice(0, 15);
