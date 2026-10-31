@@ -217,6 +217,13 @@ button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
 .badge { font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 6px; background: var(--raised); border: 1px solid var(--line); }
 .badge.score { color: #231700; background: #f5c518; border-color: #f5c518; }
 .row-btns { display: flex; gap: 4px; align-items: center; justify-content: end; flex-wrap: wrap; }
+.nearby { display: grid; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; box-shadow: var(--shadow); }
+.pill-link { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: 999px; border: 1px solid var(--line); background: var(--raised); color: var(--fg); text-decoration: none; font-weight: 600; font-size: 0.84rem; }
+.pill-link::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--parks); }
+.pill-link.ev::before { background: var(--coral); }
+.pill-link:hover { border-color: var(--accent); }
+.map-link { color: var(--accent-ink); font-weight: 600; text-decoration: none; margin-left: 4px; }
+.map-link:hover { text-decoration: underline; }
 .source { font-size: 0.78rem; color: var(--muted); margin: 0; }
 .source a { color: inherit; }
 .in-pile { font-size: 0.78rem; color: var(--muted); white-space: nowrap; display: inline-flex; gap: 4px; align-items: center; }
@@ -280,6 +287,30 @@ button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
     <div class="view-head">
       <div><h2>Weekend ideas</h2><p>Parks, paid outings for the kids, and things to do together.</p></div>
     </div>
+    <div class="nearby">
+      <span class="label">Find nearby in Google Maps</span>
+      <div class="chips">
+        <a class="pill-link" href="https://www.google.com/maps/search/parks+near+me" target="_blank" rel="noopener">Parks</a>
+        <a class="pill-link" href="https://www.google.com/maps/search/playgrounds+near+me" target="_blank" rel="noopener">Playgrounds</a>
+        <a class="pill-link" href="https://www.google.com/maps/search/beaches+near+me" target="_blank" rel="noopener">Beaches</a>
+        <a class="pill-link" href="https://www.google.com/maps/search/walking+tracks+near+me" target="_blank" rel="noopener">Walks &amp; tracks</a>
+        <a class="pill-link" href="https://www.google.com/maps/search/kids+activities+near+me" target="_blank" rel="noopener">Kids' activities</a>
+        <a class="pill-link" href="https://www.google.com/maps/search/indoor+playground+near+me" target="_blank" rel="noopener">Rainy-day play</a>
+      </div>
+    </div>
+    <div class="nearby">
+      <span class="label">What's on this weekend</span>
+      <div class="chips">
+        <a class="pill-link ev" href="https://www.aucklandforkids.co.nz/whats-on-this-weekend/" target="_blank" rel="noopener">Auckland for Kids</a>
+        <a class="pill-link ev" href="https://ourauckland.aucklandcouncil.govt.nz/events/" target="_blank" rel="noopener">OurAuckland events</a>
+        <a class="pill-link ev" href="https://www.eventfinda.co.nz/" target="_blank" rel="noopener">Eventfinda</a>
+        <a class="pill-link ev" href="https://www.google.com/search?q=family+events+this+weekend+near+me" target="_blank" rel="noopener">Family events</a>
+        <a class="pill-link ev" href="https://www.google.com/search?q=free+kids+events+this+weekend+near+me" target="_blank" rel="noopener">Free for kids</a>
+        <a class="pill-link ev" href="https://www.google.com/search?q=markets+this+weekend+near+me" target="_blank" rel="noopener">Markets</a>
+        <a class="pill-link ev" href="https://www.google.com/search?q=school+holiday+programmes+near+me" target="_blank" rel="noopener">Holiday programmes</a>
+        <a class="pill-link ev" href="https://www.facebook.com/events/" target="_blank" rel="noopener">Facebook events</a>
+      </div>
+    </div>
     <div class="chips" id="cat-filter" role="group" aria-label="Filter by category"></div>
     <details class="adder">
       <summary><span class="plus" aria-hidden="true">+</span>Add a weekend idea</summary>
@@ -324,6 +355,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
     </div>
     <div class="seg" id="disc-switch" role="group" aria-label="Which list">
       <button type="button" data-act="disc" data-d="streaming" aria-pressed="true">Streaming top 10</button>
+      <button type="button" data-act="disc" data-d="new" aria-pressed="false">New releases</button>
       <button type="button" data-act="disc" data-d="imdb" aria-pressed="false">IMDb top rated</button>
       <button type="button" data-act="disc" data-d="dc" aria-pressed="false">DC animated</button>
     </div>
@@ -333,6 +365,13 @@ button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
         <div class="chips" id="svc-filter" role="group" aria-label="Streaming service"></div>
       </div>
       <div id="streaming"></div>
+    </div>
+    <div class="disc" data-d="new" hidden>
+      <div class="row between">
+        <h3>New releases</h3>
+        <div class="chips" id="new-filter" role="group" aria-label="Where"></div>
+      </div>
+      <div id="newlist"></div>
     </div>
     <div class="disc" data-d="imdb" hidden>
       <div class="row between">
@@ -461,7 +500,7 @@ const nextSaturday = () => { const d = new Date(); d.setDate(d.getDate() + ((6 -
 const nextFriday = () => { const d = new Date(); d.setDate(d.getDate() + ((5 - d.getDay() + 7) % 7)); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
 const fmtDate = (iso) => { if (!iso) return ""; const d = new Date(iso + "T12:00:00"); return d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" }); };
 
-const state = { crew: [], movies: [], acts: [], rotation: { turn: 0 }, loaded: { crew: false, movies: false, acts: false, rotation: false }, open: null, catFilter: "all", sort: "votes", readOnly: false, charts: null, svc: 0, era: "all", famOnly: false, dcLine: "all", dcHide: false, info: {}, aboutOpen: null, aboutBusy: {}, aboutErr: {}, canAsk: false };
+const state = { crew: [], movies: [], acts: [], rotation: { turn: 0 }, loaded: { crew: false, movies: false, acts: false, rotation: false }, open: null, catFilter: "all", sort: "votes", readOnly: false, charts: null, svc: 0, era: "all", famOnly: false, dcLine: "all", dcHide: false, newCharts: null, newSvc: 0, info: {}, aboutOpen: null, aboutBusy: {}, aboutErr: {}, canAsk: false };
 
 /* Storage: the shared artifact database when available, otherwise this browser only. */
 const store = (() => {
@@ -647,7 +686,7 @@ function renderActs() {
       ${catTile(a.category)}
       <div class="body">
       <div class="title"><h3>${esc(a.name)}</h3><span class="tag ${esc(a.category)}">${esc(CATS[a.category] || "Other")}</span>${planned ? `<span class="tag date">${esc(fmtDate(a.plannedFor))}</span>` : ""}</div>
-      ${a.cost || a.where ? `<div class="meta">${a.cost ? `<span><strong>Cost</strong> ${esc(a.cost)}</span>` : ""}${a.where ? `<span><strong>Where</strong> ${esc(a.where)}</span>` : ""}</div>` : ""}
+      ${a.cost || a.where ? `<div class="meta">${a.cost ? `<span><strong>Cost</strong> ${esc(a.cost)}</span>` : ""}${a.where ? `<span><strong>Where</strong> ${esc(a.where)} <a class="map-link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(a.where)}" target="_blank" rel="noopener">Map ↗</a></span>` : ""}</div>` : ""}
       ${a.notes ? `<p class="notes">${esc(a.notes)}</p>` : ""}
       <div class="votes">${votesHtml("acts", a)}</div>
       </div>
@@ -758,17 +797,20 @@ If you are not confident you know this specific film (it may be very recent, obs
     delete state.aboutBusy[k]; render();
   }
 }
+function renderChartList(doc, idx, act, chipsEl, listEl, ranked, emptyText) {
+  const charts = doc?.services || [];
+  $(chipsEl).innerHTML = charts.map((c, i) => `<button type="button" class="chip small" data-act="${act}" data-i="${i}" aria-pressed="${idx === i}">${esc(c.name)}</button>`).join("");
+  const c = charts[idx] || charts[0];
+  if (!c) { $(listEl).innerHTML = `<div class="empty"><p>${doc === null ? "Loading…" : emptyText}</p></div>`; return; }
+  $(listEl).innerHTML = `<div class="chart">${(c.movies || []).map((m, i) => {
+    const sub = [m.year, m.views ? m.views + " views" : "", m.added ? "Added " + m.added : ""].filter(Boolean).map(esc).join(" · ");
+    return `<div class="chart-row ${ranked ? "" : "norank"}">${ranked ? `<span class="rank">${i + 1}</span>` : ""}${poster(m.title, "sm")}<div class="what"><strong>${esc(m.title)}</strong>${sub ? `<div class="sub mono">${sub}</div>` : ""}</div>${addButton(m)}${aboutPanel(m)}</div>`;
+  }).join("")}</div>
+    <p class="source">${esc(c.period || "")}${c.region ? " · " + esc(c.region) : ""}${c.url ? ` · Source: <a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.source || "chart")}</a>` : ""}</p>`;
+}
 function renderDiscover() {
-  const charts = state.charts?.services || [];
-  const sEl = $("#streaming");
-  $("#svc-filter").innerHTML = charts.map((c, i) => `<button type="button" class="chip small" data-act="svc" data-i="${i}" aria-pressed="${state.svc === i}">${esc(c.name)}</button>`).join("");
-  const c = charts[state.svc] || charts[0];
-  if (!c) {
-    sEl.innerHTML = `<div class="empty"><p>${state.charts === null ? "Loading this week's charts…" : "No streaming charts yet. They appear here once added."}</p></div>`;
-  } else {
-    sEl.innerHTML = `<div class="chart">${(c.movies || []).map((m, i) => `<div class="chart-row"><span class="rank">${i + 1}</span>${poster(m.title, "sm")}<div class="what"><strong>${esc(m.title)}</strong>${m.year || m.views ? `<div class="sub mono">${[m.year, m.views ? m.views + " views" : ""].filter(Boolean).map(esc).join(" · ")}</div>` : ""}</div>${addButton(m)}${aboutPanel(m)}</div>`).join("")}</div>
-      <p class="source">${esc(c.period || "")}${c.region ? " · " + esc(c.region) : ""}${c.url ? ` · Source: <a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.source || "chart")}</a>` : ""}</p>`;
-  }
+  renderChartList(state.charts, state.svc, "svc", "#svc-filter", "#streaming", true, "No streaming charts yet. They appear here once added.");
+  renderChartList(state.newCharts, state.newSvc, "newsvc", "#new-filter", "#newlist", false, "No new releases yet. They appear here once added.");
   $("#era-filter").innerHTML = ERAS.map(([k, l]) => `<button type="button" class="chip small" data-act="era" data-era="${k}" aria-pressed="${state.era === k}">${l}</button>`).join("");
   const fam = (m) => m.cert === "G" || m.cert === "PG";
   const list = IMDB_TOP.filter((m) => (state.era === "all" || (m.year >= Number(state.era) && m.year < Number(state.era) + 10)) && (!state.famOnly || fam(m)))
@@ -895,6 +937,7 @@ document.addEventListener("click", async (e) => {
       if (state.aboutOpen === k) lookUp(b.dataset.title, b.dataset.year);
       break;
     }
+    case "newsvc": state.newSvc = Number(b.dataset.i); renderDiscover(); break;
     case "dc-line": state.dcLine = b.dataset.line; renderDiscover(); break;
     case "era": state.era = b.dataset.era; renderDiscover(); break;
     case "add-chart": {
@@ -940,6 +983,7 @@ document.addEventListener("click", async (e) => {
   store.watch("movies", (d) => { state.movies = d; mark.movies(); render(); }, onErr);
   store.watch("acts", (d) => { state.acts = d; mark.acts(); render(); }, onErr);
   store.watch("info", (d) => { d.forEach((x) => { const { id, ...v } = x; state.info[id] = v; }); render(); }, () => {});
+  store.watchDoc("charts/new", (d) => { state.newCharts = d || {}; renderDiscover(); }, () => { state.newCharts = {}; renderDiscover(); });
   store.watchDoc("charts/streaming", (d) => { state.charts = d || {}; renderDiscover(); }, () => { state.charts = {}; renderDiscover(); });
   store.watchDoc("rotation/state", (d) => { state.rotation = d || { turn: 0 }; mark.rotation(); render(); }, onErr);
 })();
