@@ -9,11 +9,16 @@ looks each film up on TMDB and rewrites the MOVIE_DATA block in index.html
   t  title as listed     y  year          r  runtime in minutes
   g  TMDB genre ids      c  US rating     nz NZ rating
   v  TMDB score (0-10)   k  related films in the catalogue (keys, best first)
+  w  where to watch in NZ: {"s": streaming, "r": rent, "b": buy} (JustWatch data via TMDB)
+  pw streaming services at the previous --where check, kept only when they changed
+
+Streaming changes often: --where refreshes only the where-to-watch data
+(one request per film) and stamps WATCH_ASOF with today's date.
 
 Re-running only looks up new titles; --force refreshes everything.
 Set TMDB_API_KEY as for fetch_posters.py.
 
-Usage: python3 tools/fetch_details.py [--force]
+Usage: python3 tools/fetch_details.py [--force | --where]
 """
 import argparse
 import json
@@ -21,11 +26,31 @@ import os
 import re
 import sys
 import time
+from datetime import date
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from fetch_posters import EXTRA, PAGE, get, norm, page_titles, search_movie  # noqa: E402
 
 BEGIN, END = "/* MOVIEDATA:BEGIN */\n", "\n/* MOVIEDATA:END */"
+COUNTRY = "NZ"
+
+
+def clean_provider(name):
+    for suffix in (" Standard with Ads", " Basic with Ads", " with Ads", " Amazon Channel", " Apple TV Channel"):
+        if name.endswith(suffix):
+            name = name[: -len(suffix)]
+    return name.strip()
+
+
+def where(providers):
+    nz = providers.get("results", {}).get(COUNTRY) or {}
+    out = {}
+    for src, dst in (("flatrate", "s"), ("free", "s"), ("ads", "s"), ("rent", "r"), ("buy", "b")):
+        for p in sorted(nz.get(src, []), key=lambda x: x.get("display_priority", 99)):
+            n = clean_provider(p.get("provider_name", ""))
+            if n and "JustWatch" not in n and n not in out.setdefault(dst, []):
+                out[dst].append(n)
+    return {k: v[:4] for k, v in out.items() if v}
 
 
 def cert(release_dates, country):
@@ -40,7 +65,7 @@ def cert(release_dates, country):
 
 
 def details(movie_id, key):
-    headers, q = {}, "append_to_response=release_dates,recommendations,similar"
+    headers, q = {}, "append_to_response=release_dates,recommendations,similar,watch/providers"
     if len(key) > 40:
         headers["Authorization"] = f"Bearer {key}"
     elif key:
@@ -51,10 +76,11 @@ def details(movie_id, key):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--force", action="store_true")
+    ap.add_argument("--where", action="store_true", help="refresh only where-to-watch data")
     args = ap.parse_args()
 
     src = PAGE.read_text(encoding="utf-8")
-    m = re.search(re.escape(BEGIN) + r"const MOVIE_DATA = (\{.*?\});" + re.escape(END), src, re.S)
+    m = re.search(re.escape(BEGIN) + r"const MOVIE_DATA = (\{.*?\});(?:\nconst WATCH_ASOF = \"[^\"]*\";)?" + re.escape(END), src, re.S)
     if not m:
         sys.exit("MOVIEDATA markers not found in index.html")
     data = json.loads(m.group(1))
@@ -65,6 +91,31 @@ def main():
         titles += [(x["title"], x.get("year")) for x in json.loads(EXTRA.read_text(encoding="utf-8"))]
 
     key = os.environ.get("TMDB_API_KEY", "").strip()
+    asof = re.search(r'const WATCH_ASOF = "([^"]*)";', src)
+    asof = asof.group(1) if asof else ""
+    if args.where:
+        headers, q = {}, ""
+        if len(key) > 40:
+            headers["Authorization"] = f"Bearer {key}"
+        elif key:
+            q = "?api_key=" + key
+        for k, i in cache_ids.items():
+            if not i:
+                continue
+            try:
+                w = where(json.loads(get(f"https://api.themoviedb.org/3/movie/{i}/watch/providers{q}", headers)))
+                old = data[k].get("w", {}).get("s", [])
+                data[k].pop("pw", None)
+                if sorted(old) != sorted(w.get("s", [])):
+                    data[k]["pw"] = old or ["none"]  # previous streaming list, so the page can say what arrived or left
+                data[k].pop("w", None)
+                if w:
+                    data[k]["w"] = w
+                time.sleep(0.1)
+            except Exception as e:
+                print(f"  error: {data[k].get('t')}: {e}")
+        asof = date.today().isoformat()
+        titles = []
     raw, seen, missing = {}, set(), []
     for title, year in titles:
         k = norm(title)
@@ -88,7 +139,9 @@ def main():
                 "c": cert(d.get("release_dates", {}), "US"),
                 "nz": cert(d.get("release_dates", {}), "NZ"),
                 "v": round(d.get("vote_average") or 0, 1),
+                "w": where(d.get("watch/providers", {})),
             }
+            asof = date.today().isoformat()
             cache_ids[k] = hit["id"]
             print(f"  ok: {title}")
             time.sleep(0.15)
@@ -113,7 +166,7 @@ def main():
         if cache_ids.get(k):
             e["_id"] = cache_ids[k]
         out[k] = e
-    block = BEGIN + "const MOVIE_DATA = " + json.dumps(out, ensure_ascii=False, separators=(",", ":")) + ";" + END
+    block = BEGIN + "const MOVIE_DATA = " + json.dumps(out, ensure_ascii=False, separators=(",", ":")) + ";\n" + f'const WATCH_ASOF = "{asof}";' + END
     src = src[: m.start()] + block + src[m.end():]
     PAGE.write_text(src, encoding="utf-8")
     print(f"{len(out)} films with details; {len(missing)} missing: {', '.join(missing)}")
