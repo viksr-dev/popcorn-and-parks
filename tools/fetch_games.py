@@ -32,6 +32,8 @@ from fetch_posters import PAGE, get, norm  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "games"
+CACHE = OUT / "cache"  # single covers (not committed); sheets are what the page loads
+SHEET_COLS, SHEET_ROWS, COVER = 10, 10, (120, 180)
 EXTRA = ROOT / "tools" / "extra-games.json"
 GP_CONSOLE = "f6f1f99f-9b49-4ccd-b3bf-4d9767a77f5e"
 BEGIN, END = "/* GAMES:BEGIN */\n", "\n/* GAMES:END */"
@@ -94,12 +96,13 @@ def entry(p, gp):
 
 
 STEAM_OUT = ROOT / "steam"
+STEAM_CACHE = STEAM_OUT / "cache"
 SBEGIN, SEND = "/* STEAM:BEGIN */\n", "\n/* STEAM:END */"
 
 
 def steam():
     """Steam NZ specials, new releases, coming soon and top sellers, with review ratings."""
-    STEAM_OUT.mkdir(exist_ok=True)
+    STEAM_CACHE.mkdir(parents=True, exist_ok=True)
     d = json.loads(get("https://store.steampowered.com/api/featuredcategories?cc=nz&l=english"))
     out = {}
     for key, short in (("specials", "deals"), ("new_releases", "new"), ("coming_soon", "soon"), ("top_sellers", "top")):
@@ -119,22 +122,56 @@ def steam():
                 e["coop"] = [lab for lab, keys in (("Split-screen", ("Shared/Split Screen Co-op", "Shared/Split Screen PvP", "Shared/Split Screen")), ("Online co-op", ("Online Co-op",)), ("Couch co-op", ("Shared/Split Screen Co-op",))) if cats & set(keys)] or None
             except Exception:
                 pass
-            f = STEAM_OUT / f"{i}.jpg"
+            f = STEAM_CACHE / f"{i}.jpg"
             if not f.exists():
                 try:
                     f.write_bytes(get(x.get("small_capsule_image") or x.get("header_image")))
                 except Exception:
                     pass
-            if f.exists():
-                e["img"] = 1
             items.append({k: v for k, v in e.items() if v not in (None, "")})
             time.sleep(0.1)
         out[short] = items
+    allit = {}
+    for lst in out.values():
+        for it in lst:
+            if (STEAM_CACHE / f"{it['id']}.jpg").exists():
+                allit.setdefault(it["id"], []).append(it)
+    uniq_items = [v[0] for v in allit.values()]
+    sheet(uniq_items, STEAM_CACHE, STEAM_OUT / "sheet-{}.jpg", (231, 87), 5, 20, lambda it: f"{it['id']}.jpg")
+    for v in allit.values():
+        for it in v[1:]:
+            if "sp" in v[0]:
+                it["sp"] = v[0]["sp"]
     return out
 
 
+def sheet(items, cache, pattern, size, cols, rows, name):
+    """Paste each item's image into numbered sheets; sets item["sp"] = [sheet, index]."""
+    from PIL import Image
+    per = cols * rows
+    for old in pattern.parent.glob(pattern.name.replace("{}", "*")):
+        old.unlink()
+    for n in range(0, len(items), per):
+        chunk = items[n:n + per]
+        r = (len(chunk) + cols - 1) // cols
+        img = Image.new("RGB", (cols * size[0], r * size[1]), (20, 24, 40))
+        for i, it in enumerate(chunk):
+            try:
+                im = Image.open(cache / name(it)).convert("RGB")
+                # cover-crop to the tile
+                sw, sh = im.size; tw, th = size
+                scale = max(tw / sw, th / sh)
+                im = im.resize((max(tw, round(sw * scale)), max(th, round(sh * scale))))
+                l, t = (im.width - tw) // 2, (im.height - th) // 2
+                img.paste(im.crop((l, t, l + tw, t + th)), ((i % cols) * tw, (i // cols) * th))
+                it["sp"] = [n // per, i, r]
+            except Exception as ex:
+                print(f"  sheet error: {name(it)}: {ex}")
+        img.save(str(pattern).format(n // per), quality=72, optimize=True)
+
+
 def main():
-    OUT.mkdir(exist_ok=True)
+    CACHE.mkdir(parents=True, exist_ok=True)
     gp = gamepass_ids()
     extra = []
     for t in json.loads(EXTRA.read_text(encoding="utf-8")):
@@ -158,7 +195,7 @@ def main():
             if k in seen:
                 continue
             seen.add(k)
-            f = OUT / f"{e['id']}.jpg"
+            f = CACHE / f"{e['id']}.jpg"
             if img and not f.exists():
                 try:
                     poster = img["ImagePurpose"] == "Poster"
@@ -166,11 +203,12 @@ def main():
                     f.write_bytes(get(url + ("?w=180&h=270&q=70&format=jpg" if poster else "?w=220&h=220&q=70&format=jpg")))
                 except Exception as ex:
                     print(f"  image error: {e['t']}: {ex}")
-            if f.exists():
-                e["img"] = 1
             games.append(e)
         time.sleep(0.2)
     games.sort(key=lambda g: norm(g["t"]))
+    # Pack covers into sprite sheets: an artifact can hold only 512 files.
+    with_img = [g for g in games if (CACHE / f"{g['id']}.jpg").exists()]
+    sheet(with_img, CACHE, OUT / "sheet-{}.jpg", COVER, SHEET_COLS, SHEET_ROWS, lambda g: f"{g['id']}.jpg")
     src = PAGE.read_text(encoding="utf-8")
     m = re.search(re.escape(BEGIN) + r".*?" + re.escape(END), src, re.S)
     block = BEGIN + "const GAMES = " + json.dumps(games, ensure_ascii=False, separators=(",", ":")) + ";" + END
