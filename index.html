@@ -220,6 +220,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
 .nearby { display: grid; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; box-shadow: var(--shadow); }
 .pill-link { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: 999px; border: 1px solid var(--line); background: var(--raised); color: var(--fg); text-decoration: none; font-weight: 600; font-size: 0.84rem; }
 .pill-link::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--parks); }
+.pill-link.ev::before { background: var(--coral); }
 .pill-link:hover { border-color: var(--accent); }
 .map-link { color: var(--accent-ink); font-weight: 600; text-decoration: none; margin-left: 4px; }
 .map-link:hover { text-decoration: underline; }
@@ -295,6 +296,17 @@ button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
         <a class="pill-link" href="https://www.google.com/maps/search/walking+tracks+near+me" target="_blank" rel="noopener">Walks &amp; tracks</a>
         <a class="pill-link" href="https://www.google.com/maps/search/kids+activities+near+me" target="_blank" rel="noopener">Kids' activities</a>
         <a class="pill-link" href="https://www.google.com/maps/search/indoor+playground+near+me" target="_blank" rel="noopener">Rainy-day play</a>
+      </div>
+    </div>
+    <div class="nearby">
+      <span class="label">What's on this weekend</span>
+      <div class="chips">
+        <a class="pill-link ev" href="https://www.eventfinda.co.nz/" target="_blank" rel="noopener">Eventfinda</a>
+        <a class="pill-link ev" href="https://www.google.com/search?q=family+events+this+weekend+near+me" target="_blank" rel="noopener">Family events</a>
+        <a class="pill-link ev" href="https://www.google.com/search?q=free+kids+events+this+weekend+near+me" target="_blank" rel="noopener">Free for kids</a>
+        <a class="pill-link ev" href="https://www.google.com/search?q=markets+this+weekend+near+me" target="_blank" rel="noopener">Markets</a>
+        <a class="pill-link ev" href="https://www.google.com/search?q=school+holiday+programmes+near+me" target="_blank" rel="noopener">Holiday programmes</a>
+        <a class="pill-link ev" href="https://www.facebook.com/events/" target="_blank" rel="noopener">Facebook events</a>
       </div>
     </div>
     <div class="chips" id="cat-filter" role="group" aria-label="Filter by category"></div>
