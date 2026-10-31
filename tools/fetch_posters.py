@@ -8,7 +8,9 @@ downloaded into posters/ and published alongside index.html. This script:
    DC_ANIMATED, STARTER_MOVIES) plus tools/extra-titles.json (the movie
    pile and chart titles from the shared database) and any --title args.
 2. Finds each title with the TMDB API (api.themoviedb.org). Set
-   TMDB_API_KEY to a free TMDB v3 API key or v4 read access token.
+   TMDB_API_KEY to a free TMDB v3 API key or v4 read access token (or leave
+   it unset where a proxy adds the Authorization header, as in Claude's cloud
+   environment).
 3. Downloads the w185 poster from image.tmdb.org into posters/<slug>.jpg.
 4. Rewrites the POSTERS map in index.html (between the POSTERS markers).
 
@@ -80,7 +82,7 @@ def search_api(title, year, key):
     headers, params = {}, {"query": title, "include_adult": "false"}
     if len(key) > 40:
         headers["Authorization"] = f"Bearer {key}"
-    else:
+    elif key:
         params["api_key"] = key
     if year:
         params["primary_release_year"] = str(year)
@@ -113,8 +115,7 @@ def main():
     titles += [(t, args.year) for t in args.title]
 
     key = os.environ.get("TMDB_API_KEY", "").strip()
-    if not key:
-        sys.exit("Set TMDB_API_KEY (free from https://www.themoviedb.org/settings/api)")
+    # With no key the request goes out bare: fine where a proxy adds the Authorization header.
     OUT.mkdir(exist_ok=True)
     seen, missing = set(), []
     for title, year in titles:
