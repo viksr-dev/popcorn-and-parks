@@ -152,6 +152,10 @@ button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
 .poster span { position: relative; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
 .poster.sm { width: 40px; border-radius: 6px; font-size: 0; padding: 0; }
 .poster.sm span { display: none; }
+/* Real poster art, when a downloaded image exists for the title; the coloured tile stays underneath as the fallback */
+.poster > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
+.poster.has-img::before { display: none; }
+.poster.watched::after { z-index: 2; }
 .poster.watched::after { content: "✓"; position: absolute; top: 4px; right: 4px; width: 18px; height: 18px; border-radius: 50%; background: var(--parks); color: #06240f; display: grid; place-items: center; font-size: 0.7rem; }
 
 .cat-tile { width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; flex: none; color: var(--together); background: color-mix(in srgb, currentColor 15%, transparent); }
@@ -580,9 +584,17 @@ const starsRead = (n) => (n ? `<span class="stars readonly" aria-label="${n} of 
 
 /* ---------- Render ---------- */
 const hueOf = (t) => { let h = 0; for (const ch of String(t)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return h % 360; };
+// Poster images live in posters/ and are published with the page (its CSP blocks remote images).
+// Keys are norm(title); tools/fetch_posters.py rewrites this block.
+/* POSTERS:BEGIN */
+const POSTERS = {};
+/* POSTERS:END */
 function poster(title, cls = "", watched = false) {
-  return `<span class="poster ${cls} ${watched ? "watched" : ""}" style="--h:${hueOf(norm(title))}" aria-hidden="true"><span>${esc(title)}</span></span>`;
+  const img = POSTERS[norm(title)];
+  return `<span class="poster ${cls} ${watched ? "watched" : ""} ${img ? "has-img" : ""}" style="--h:${hueOf(norm(title))}" aria-hidden="true"><span>${esc(title)}</span>${img ? `<img src="posters/${esc(img)}" alt="" loading="lazy" decoding="async">` : ""}</span>`;
 }
+// If a poster file is missing, drop the image so the coloured tile shows instead.
+document.addEventListener("error", (e) => { const t = e.target; if (t instanceof HTMLImageElement && t.parentElement?.classList.contains("has-img")) { t.parentElement.classList.remove("has-img"); t.remove(); } }, true);
 const ICONS = {
   turn: `<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></svg>`,
   movie: `<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4"/></svg>`,
