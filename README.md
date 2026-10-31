@@ -17,6 +17,7 @@ A family planner for movie nights and weekend activities. It is a single HTML fi
 - Plan an idea for a specific day, then mark it done and rate it
 
 **Discover**
+- **Tonight**: "What do you feel like?" Tap moods (Feel-good, Make us laugh, Edge of your seat, Cosy, Mind-bending, Big adventure, Spooky) and genres, choose how long you've got, and tick "Kids are watching" to keep to G and PG. Pick who's watching and films they voted for, or that suit the genres they like, move up the list. Below that, "Because you liked…" suggests related films for your recent 4 and 5 star ratings. "Surprise us" picks one of the best matches. Data comes from TMDB via `python3 tools/fetch_details.py`, which writes the `MOVIE_DATA` block in `index.html`; re-run it after adding titles to `tools/extra-titles.json`.
 - Top 10 movies in New Zealand on Netflix, Prime Video, Disney+, HBO Max and Apple TV, read from a `charts/streaming` document in the shared database so the lists can be refreshed without changing the page
 - A list of movies from IMDb's Top 250 released from 1990 onwards, filterable by decade and by family-friendly rating (G or PG)
 - Every DC animated feature film to date (about 100), filterable by line: DC Universe Animated Originals, cinema releases, kids and LEGO films, and others, with a watched count
