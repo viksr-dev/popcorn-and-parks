@@ -40,6 +40,8 @@ A family planner for movie nights and weekend activities. It is a single HTML fi
 
 **Family stats** at the top of History: films and hours this year, average rating, best picker, favourite genres, top-rated film, outings and DC progress. "Because you liked…" follows who's watching, using films they voted for.
 
+**Games**: a Game night tab. *Play tonight* picks games by how you're playing (couch co-op, split-screen, online co-op, versus, solo), number of players, where you can play it (yours, Game Pass, PS Plus, to buy), genre and age rating, with Surprise us and Show me different ones. *Our games* holds what you own on Xbox, PlayStation, Switch and PC and what's in PS Plus. Add by name or take a photo of a PS Plus page, library or game boxes, and Claude reads the titles and fills in co-op details for games we have no data for. *Deals & new* shows Steam specials, new releases, coming soon and top sellers (NZD, with Metacritic and recommendation counts), Xbox specials among catalogue games, and links to PlayStation and Switch deals. Data comes from the Microsoft Store and Steam via `python3 tools/fetch_games.py` (no API keys needed). Game Pass and prices change often, so re-run it to refresh.
+
 **History** of every movie watched and activity done, with ratings.
 
 Starter buttons fill an empty planner with a few family movies and general activity ideas you can delete.
