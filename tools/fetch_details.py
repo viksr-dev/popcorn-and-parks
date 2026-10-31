@@ -10,6 +10,7 @@ looks each film up on TMDB and rewrites the MOVIE_DATA block in index.html
   g  TMDB genre ids      c  US rating     nz NZ rating
   v  TMDB score (0-10)   k  related films in the catalogue (keys, best first)
   w  where to watch in NZ: {"s": streaming, "r": rent, "b": buy} (JustWatch data via TMDB)
+  pw streaming services at the previous --where check, kept only when they changed
 
 Streaming changes often: --where refreshes only the where-to-watch data
 (one request per film) and stamps WATCH_ASOF with today's date.
@@ -103,6 +104,10 @@ def main():
                 continue
             try:
                 w = where(json.loads(get(f"https://api.themoviedb.org/3/movie/{i}/watch/providers{q}", headers)))
+                old = data[k].get("w", {}).get("s", [])
+                data[k].pop("pw", None)
+                if sorted(old) != sorted(w.get("s", [])):
+                    data[k]["pw"] = old or ["none"]  # previous streaming list, so the page can say what arrived or left
                 data[k].pop("w", None)
                 if w:
                     data[k]["w"] = w

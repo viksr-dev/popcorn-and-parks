@@ -340,6 +340,49 @@ button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
 .svc-card details { font-size: 0.82rem; color: var(--muted); }
 .svc-card summary { cursor: pointer; }
 .svc-card ul { margin: 6px 0 0; padding-left: 18px; }
+/* Weekend explorer */
+.explore { display: grid; gap: 14px; }
+.plist { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+.place { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; display: grid; gap: 8px; align-content: start; box-shadow: var(--shadow); }
+.place .top { display: flex; gap: 10px; align-items: start; }
+.place .emoji { font-size: 1.6rem; line-height: 1; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; background: var(--sunk); flex: none; }
+.place h3 { font-size: 0.98rem; }
+.place .drive { font-family: var(--mono); font-size: 0.75rem; color: var(--accent-ink); }
+.place p { margin: 0; font-size: 0.84rem; color: var(--muted); }
+.place .tags { display: flex; gap: 4px; flex-wrap: wrap; }
+.place .tags span { font-size: 0.68rem; padding: 1px 7px; border-radius: 99px; background: var(--sunk); color: var(--muted); }
+.place .tags .rainy { color: var(--together); }
+.place .tags .free { color: var(--parks); }
+.place .row { gap: 6px; flex-wrap: wrap; }
+.place a.small { text-decoration: none; }
+.wx-note { font-size: 0.82rem; color: var(--muted); }
+/* Movie night mode, kids' picks */
+.overlay { position: fixed; inset: 0; z-index: 50; overflow-y: auto; display: grid; place-items: center; padding: 24px 16px; background: radial-gradient(70% 50% at 50% 30%, rgb(245 183 64 / 0.22), transparent 70%), rgb(6 8 18 / 0.94); backdrop-filter: blur(6px); color: #fff; }
+.overlay .box { display: grid; gap: 14px; justify-items: center; text-align: center; max-width: 420px; width: 100%; }
+.overlay .poster { width: min(240px, 60vw); border-radius: 16px; font-size: 1.1rem; padding: 14px; box-shadow: 0 0 0 1px rgb(255 255 255 / 0.15), 0 30px 80px -20px rgb(245 183 64 / 0.5); }
+.overlay h2 { color: #fff; font-size: 1.6rem; }
+.overlay .label { color: #ffd36b; }
+.overlay .x { position: fixed; top: max(14px, env(safe-area-inset-top)); right: 14px; background: rgb(255 255 255 / 0.12); color: #fff; border: none; width: 42px; height: 42px; border-radius: 50%; padding: 0; z-index: 2; }
+.countdown { font-family: var(--display); font-weight: 800; font-size: 2.2rem; letter-spacing: -0.02em; color: #ffd36b; font-variant-numeric: tabular-nums; }
+.snacks { display: grid; gap: 6px; width: 100%; text-align: left; background: rgb(255 255 255 / 0.06); border-radius: 14px; padding: 12px 14px; }
+.snacks label { display: flex; gap: 10px; align-items: center; font-size: 0.95rem; cursor: pointer; }
+.snacks label.done span { text-decoration: line-through; opacity: 0.6; }
+.overlay .where { justify-content: center; font-size: 0.9rem; color: #8fe3a8; }
+.overlay .where.rent { color: rgb(255 255 255 / 0.7); }
+.swipe { position: relative; touch-action: pan-y; user-select: none; transition: transform .25s ease, opacity .25s ease; }
+.swipe.gone-l { transform: translateX(-120%) rotate(-14deg); opacity: 0; }
+.swipe.gone-r { transform: translateX(120%) rotate(14deg); opacity: 0; }
+.kid-btns { display: flex; gap: 22px; justify-content: center; }
+.kid-btns button { width: 72px; height: 72px; border-radius: 50%; font-size: 2rem; padding: 0; border: none; }
+.kid-btns .no { background: #3a2230; }
+.kid-btns .yes { background: #1f3b2a; }
+.kid-who { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.overlay .vote { color: #fff; }
+/* Family stats */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.stats .mstat b { font-size: 1.2rem; }
+.svc-alert { font-size: 0.85rem; padding: 8px 12px; border-radius: 10px; background: color-mix(in srgb, var(--parks) 14%, transparent); }
+.svc-alert.gone { background: color-mix(in srgb, var(--coral) 14%, transparent); }
 /* Discover > Tonight */
 .tonight { display: grid; gap: 14px; }
 .tonight .grp { display: grid; gap: 6px; }
@@ -412,6 +455,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
     <div class="view-head">
       <div><h2>Weekend ideas</h2><p>Parks, paid outings for the kids, and things to do together.</p></div>
     </div>
+    <div class="explore" id="explore"></div>
     <div class="nearby">
       <span class="label">Find nearby in Google Maps</span>
       <div class="chips">
@@ -487,7 +531,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
       <button type="button" data-act="disc" data-d="dc" aria-pressed="false">DC animated</button>
     </div>
     <div class="disc tonight" data-d="tonight">
-      <div class="row between"><h3>What do you feel like tonight?</h3><button type="button" class="small" data-act="t-surprise">Surprise us</button></div>
+      <div class="row between"><h3>What do you feel like tonight?</h3><div class="row"><button type="button" class="small" data-act="kp-open">Kids' picks 👍👎</button><button type="button" class="small" data-act="t-surprise">Surprise us</button></div></div>
       <div class="filters">
       <div class="grp"><span class="label">Mood</span><div class="chips" id="t-moods" role="group" aria-label="Mood"></div></div>
       <div class="grp"><span class="label">Genres</span><div class="chips" id="t-genres" role="group" aria-label="Genres"></div></div>
@@ -538,6 +582,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
 
   <section class="view" id="view-history" hidden>
     <div class="view-head"><div><h2>What we've done</h2><p>Every movie watched and weekend outing, with your ratings.</p></div></div>
+    <div id="fam-stats"></div>
     <div id="history-list"></div>
   </section>
 </div>
@@ -768,7 +813,7 @@ function renderTickets() {
     </div>
     <div class="ticket ${next && POSTERS[norm(next.title)] ? "with-poster" : ""}">${ICONS.movie}${next && POSTERS[norm(next.title)] ? `<span class="stub-poster">${poster(next.title, "sm")}</span>` : ""}
       <span class="label">Next movie night</span>
-      ${next ? `<span class="big">${esc(next.title)}</span><span class="mono muted">${esc(fmtDate(next.night)) || "Date to be set"}${next.runtime ? " · " + esc(next.runtime) + " min" : ""}</span>`
+      ${next ? `<span class="big">${esc(next.title)}</span><span class="mono muted">${esc(fmtDate(next.night)) || "Date to be set"}${next.runtime ? " · " + esc(next.runtime) + " min" : ""}</span><button type="button" class="small" data-act="mn-open" style="justify-self:start">🍿 Movie night mode</button>`
              : `<span class="big muted">Not picked yet</span><span class="muted" style="font-size:.85rem">Choose “Make it next” on a movie.</span>`}
     </div>
     <div class="ticket">${ICONS.weekend}
@@ -1067,7 +1112,8 @@ function tonightPicks() {
 // Most recent films rated 4 or 5 stars, with related films that pass the filters.
 function becauseLiked() {
   const watched = watchedKeys();
-  const liked = state.movies.filter((m) => m.status === "watched" && m.rating >= 4 && dataFor(m.title))
+  const who = tonight.who.filter((id) => crewById(id));
+  const liked = state.movies.filter((m) => m.status === "watched" && m.rating >= 4 && dataFor(m.title) && (!who.length || who.some((id) => (m.votes || {})[id])))
     .sort((a, b) => String(b.watchedOn || "").localeCompare(String(a.watchedOn || ""))).slice(0, 3);
   return liked.map((m) => {
     const d = dataFor(m.title), key = norm(m.title);
@@ -1080,7 +1126,8 @@ function becauseLiked() {
         .sort((a, b) => b.n - a.n || (b.x.v || 0) - (a.x.v || 0)).slice(0, 6 - rel.length).map((o) => o.x);
       rel.push(...extra);
     }
-    return { m, rel: rel.slice(0, 6) };
+    const fans = who.filter((id) => (m.votes || {})[id]).map((id) => crewById(id).name);
+    return { m, rel: rel.slice(0, 6), fans };
   }).filter((x) => x.rel.length);
 }
 function pickTile(d, why) {
@@ -1140,7 +1187,7 @@ function renderTonight() {
 
   const liked = becauseLiked();
   $("#t-liked").innerHTML = liked.length
-    ? liked.map(({ m, rel }) => `<div class="grp"><div class="liked-head"><h3>Because you liked ${esc(m.title)}</h3>${starsRead(m.rating)}</div><div class="prow">${rel.map((d) => pickTile(d)).join("")}</div></div>`).join("")
+    ? liked.map(({ m, rel, fans }) => `<div class="grp"><div class="liked-head"><h3>Because ${fans && fans.length ? esc(fans.join(" & ")) : "you"} liked ${esc(m.title)}</h3>${starsRead(m.rating)}</div><div class="prow">${rel.map((d) => pickTile(d)).join("")}</div></div>`).join("")
     : `<p class="source">Rate a film 4 or 5 stars after you watch it, and similar films will show up here.</p>`;
 }
 function showReveal(p) {
@@ -1312,7 +1359,16 @@ function renderServiceMonth() {
   const ranked = Object.entries(by).sort((a, b) => b[1].w - a[1].w || b[1].n - a[1].n).slice(0, 5);
   const max = ranked[0]?.[1].n || 1;
   const best = ranked[0];
+  // Changes since the previous streaming check (needs two checks: fetch_details.py --where keeps the old list as "pw").
+  const alerts = [];
+  for (const m of pile) {
+    const d = WATCH_INFO[norm(m.title)]; if (!d || !d.pw) continue;
+    const now2 = streams(d), before = uniq(d.pw.filter((x) => x !== "none").map(pname));
+    now2.filter((x) => !before.includes(x)).forEach((x) => alerts.push(`<div class="svc-alert">🎉 <strong>${esc(m.title)}</strong> is now on ${esc(x)}</div>`));
+    before.filter((x) => !now2.includes(x)).forEach((x) => alerts.push(`<div class="svc-alert gone">👋 <strong>${esc(m.title)}</strong> has left ${esc(x)}</div>`));
+  }
   el.innerHTML = `<div class="svc-card">
+    ${alerts.join("")}
     <div class="head"><h3>Which service this month?</h3><span class="source">From the ${pile.length} unwatched ${pile.length === 1 ? "film" : "films"} in your pile</span></div>
     ${ranked.length ? `<p style="margin:0">${best ? `<strong>${esc(best[0])}</strong> streams ${best[1].n} of them${best[1].films.length ? ` (${esc(best[1].films.slice(0, 3).join(", "))}${best[1].films.length > 3 ? "…" : ""})` : ""}.` : ""}</p>
       <div class="svc-rows">${ranked.map(([x, v], i) => `<div class="svc-row ${i === 0 ? "best" : ""}"><b>${esc(x)}</b><span class="bar"><i style="width:${Math.round((v.n / max) * 100)}%"></i></span><span class="n">${v.n} ${v.n === 1 ? "film" : "films"}</span></div>`).join("")}</div>
@@ -1322,7 +1378,246 @@ function renderServiceMonth() {
   </div>`;
 }
 
-function render() { renderTickets(); renderServiceMonth(); renderMovies(); renderActs(); renderDiscover(); renderTonight(); renderMarathon(); renderCrew(); renderHistory(); }
+/* ---------- Weekend explorer: real places up to about 2½ hours' drive from Auckland ---------- */
+// [name, lat, lon, emoji, tags, cost, note, url]. Tags: animals beach walk water thrills learn rainy free food art island
+const PLACES = [
+  ["Auckland Zoo", -36.8640, 174.7193, "🦒", "animals", "$$", "Giraffes, Sumatran tigers, kea and the big Te Wao Nui NZ area.", "https://www.aucklandzoo.co.nz"],
+  ["Hamilton Zoo", -37.7650, 175.2050, "🐯", "animals", "$$", "Walk-through aviary, cheetahs and chimps; quieter than Auckland Zoo.", "https://hamiltonzoo.co.nz"],
+  ["Kelly Tarlton's Sea Life Aquarium", -36.8473, 174.8175, "🐧", "animals rainy", "$$$", "Penguins, sharks and the underwater tunnel. Great on a wet day.", "https://www.visitsealife.com/auckland/"],
+  ["Butterfly Creek", -36.9980, 174.7970, "🦋", "animals rainy", "$$", "Butterfly house, crocodiles and a little farm, near the airport.", "https://www.butterflycreek.co.nz"],
+  ["Ambury Regional Park farm", -36.9440, 174.7580, "🐑", "animals walk free", "Free", "A working farm park with sheep, cows and birds on the harbour edge.", "https://www.aucklandcouncil.govt.nz/parks-recreation/"],
+  ["Tiritiri Matangi Island", -36.6040, 174.8920, "🐦", "animals island walk", "$$ ferry", "Open bird sanctuary: takahē, kōkako and saddleback. Book the ferry.", "https://www.tiritirimatangi.org.nz"],
+  ["Muriwai gannet colony and beach", -36.8320, 174.4290, "🪶", "animals beach walk free", "Free", "Thousands of gannets nest on the cliffs from August to March.", "https://www.aucklandcouncil.govt.nz/parks-recreation/"],
+  ["Goat Island Marine Reserve", -36.2700, 174.7960, "🐟", "animals beach water", "Free (snorkel hire $)", "Snorkel with snapper straight off the beach at Leigh.", "https://www.doc.govt.nz"],
+  ["Shakespear Regional Park", -36.6070, 174.8250, "🏖️", "beach walk animals free", "Free", "Predator-free sanctuary with calm beaches and peacocks.", "https://www.aucklandcouncil.govt.nz/parks-recreation/"],
+  ["Tāwharanui Regional Park", -36.3680, 174.8320, "🌊", "beach walk animals free", "Free", "Wide white-sand beach and an open sanctuary for birds.", "https://www.aucklandcouncil.govt.nz/parks-recreation/"],
+  ["Wenderholm Regional Park", -36.5390, 174.7110, "🌳", "beach walk free", "Free", "Pōhutukawa-lined beach, picnic lawns and a lookout walk.", "https://www.aucklandcouncil.govt.nz/parks-recreation/"],
+  ["Long Bay Regional Park", -36.6800, 174.7450, "🏐", "beach walk free", "Free", "Big family beach with playgrounds and grassy picnic areas.", "https://www.aucklandcouncil.govt.nz/parks-recreation/"],
+  ["Mission Bay", -36.8480, 174.8310, "🍦", "beach food free", "Free", "City beach with the fountain, ice cream and an easy walk.", "https://www.google.com/maps/search/Mission+Bay+Auckland"],
+  ["Piha Beach and Lion Rock", -36.9540, 174.4700, "🦁", "beach walk free", "Free", "Wild west-coast surf beach. Swim between the flags only.", "https://www.google.com/maps/search/Piha+Beach"],
+  ["Bethells Beach and Lake Wainamu", -36.8890, 174.4550, "🏜️", "beach walk water free", "Free", "Run down the huge black sand dunes into the lake.", "https://www.google.com/maps/search/Lake+Wainamu"],
+  ["Kitekite Falls", -36.9565, 174.4910, "💧", "walk free", "Free", "Short bush walk from Piha to a three-tier waterfall.", "https://www.aucklandcouncil.govt.nz/parks-recreation/"],
+  ["Arataki Visitor Centre", -36.9530, 174.6390, "🌿", "walk learn free", "Free", "Gateway to the Waitākere Ranges with short nature trails.", "https://www.aucklandcouncil.govt.nz/parks-recreation/"],
+  ["Hunua Falls", -37.0640, 175.1060, "🌧️", "walk free", "Free", "Big waterfall a short walk from the car park; picnic spot.", "https://www.aucklandcouncil.govt.nz/parks-recreation/"],
+  ["Maungakiekie / One Tree Hill and Cornwall Park", -36.8940, 174.7840, "🐄", "walk animals free", "Free", "Sheep, cows, a summit view and the café in the park.", "https://cornwallpark.co.nz"],
+  ["Maungawhau / Mount Eden", -36.8770, 174.7640, "⛰️", "walk free", "Free", "Short climb to the crater and the best view of the city.", "https://www.maunga.nz"],
+  ["Devonport and North Head", -36.8300, 174.8130, "⛴️", "walk learn free", "Free (+ ferry)", "Ferry ride, old tunnels to explore and a beach.", "https://www.google.com/maps/search/North+Head+Devonport"],
+  ["Rangitoto Island", -36.7870, 174.8600, "🌋", "walk island", "$$ ferry", "Climb a volcano and explore lava caves; take a torch.", "https://www.doc.govt.nz"],
+  ["Waiheke Island beaches", -36.7930, 175.0920, "🏝️", "beach island food", "$$ ferry", "Onetangi and Oneroa beaches, a ferry and a bus ride away.", "https://www.google.com/maps/search/Onetangi+Beach"],
+  ["Auckland Botanic Gardens", -37.0110, 174.9080, "🌸", "walk free", "Free", "Themed gardens, a children's garden and flat buggy-friendly paths.", "https://www.aucklandbotanicgardens.co.nz"],
+  ["Hamilton Gardens", -37.8060, 175.3070, "🏯", "walk free", "Free (Enclosed Gardens $)", "World-themed gardens; pair it with Hamilton Zoo.", "https://hamiltongardens.co.nz"],
+  ["Bridal Veil Falls", -37.9160, 174.9000, "💦", "walk free", "Free", "55 m waterfall near Raglan, a short walk to the lookout.", "https://www.doc.govt.nz"],
+  ["Karangahake Gorge Windows Walk", -37.4230, 175.7210, "🔦", "walk learn free", "Free", "Old gold-mining tunnels and swing bridges. Bring a torch.", "https://www.doc.govt.nz"],
+  ["Waipu Caves", -35.9280, 174.3450, "✨", "walk learn free", "Free", "Glow-worms in a cave you can walk into. Wear shoes that can get wet.", "https://www.doc.govt.nz"],
+  ["MOTAT", -36.8650, 174.7280, "🚂", "learn rainy", "$", "Planes, trams and hands-on science; great on a rainy day.", "https://www.motat.nz"],
+  ["Auckland Museum", -36.8604, 174.7778, "🦖", "learn rainy", "Free for Aucklanders", "Volcanoes, dinosaurs and the Weird & Wonderful kids' gallery.", "https://www.aucklandmuseum.com"],
+  ["Stardome Observatory", -36.9064, 174.7770, "🔭", "learn rainy", "$", "Planetarium shows and telescope viewing on clear nights.", "https://www.stardome.org.nz"],
+  ["Auckland Art Gallery", -36.8516, 174.7660, "🎨", "art rainy free", "Free", "Free gallery with family activity trails.", "https://www.aucklandartgallery.com"],
+  ["Auckland Domain Wintergardens", -36.8600, 174.7740, "🌵", "walk free", "Free", "Glasshouses full of tropical plants, next to the museum.", "https://www.google.com/maps/search/Auckland+Domain+Wintergardens"],
+  ["Waikato Museum", -37.7880, 175.2850, "🛶", "learn rainy free", "Free", "Free museum by the river in Hamilton, with a waka.", "https://waikatomuseum.co.nz"],
+  ["Hobbiton Movie Set", -37.8721, 175.6829, "🧙", "learn", "$$$", "Guided tour of the Shire near Matamata. Book ahead.", "https://www.hobbitontours.com"],
+  ["Glenbrook Vintage Railway", -37.2080, 174.7340, "🚂", "learn", "$$", "Steam train rides on running days; check the timetable.", "https://www.gvr.co.nz"],
+  ["Rainbow's End", -36.9940, 174.8770, "🎢", "thrills", "$$$", "NZ's biggest theme park, with a kids' area for little ones.", "https://www.rainbowsend.co.nz"],
+  ["Snowplanet", -36.6287, 174.6742, "⛷️", "thrills rainy", "$$$", "Real indoor snow: tubing, skiing and snowboard lessons.", "https://www.snowplanet.co.nz"],
+  ["Tree Adventures, Woodhill", -36.7220, 174.4100, "🧗", "thrills walk", "$$", "Ropes courses in the pine forest for ages 5 and up.", "https://www.treeadventures.co.nz"],
+  ["Sky Tower", -36.8485, 174.7622, "🗼", "thrills rainy", "$$", "Glass floors and a view for 80 km; SkyWalk for the brave.", "https://www.skycityauckland.co.nz/sky-tower/"],
+  ["Paradice ice skating, Avondale", -36.8960, 174.6950, "⛸️", "thrills rainy", "$", "Indoor ice rink with skate hire and penguin skate aids.", "https://www.paradice.co.nz"],
+  ["West Wave Aquatic Centre", -36.8740, 174.6400, "🏊", "water rainy", "$", "Indoor pools with a hydroslide and a toddler pool.", "https://www.aucklandleisure.co.nz"],
+  ["Parakai Springs", -36.6600, 174.4320, "♨️", "water", "$$", "Hot pools and hydroslides near Helensville.", "https://www.parakaisprings.co.nz"],
+  ["Miranda Hot Springs", -37.1960, 175.3240, "♨️", "water", "$$", "Big warm pool and a sauna on the Firth of Thames; see the shorebirds nearby.", "https://www.mirandahotsprings.co.nz"],
+  ["Matakana Village Farmers Market", -36.3530, 174.7170, "🧺", "food free", "Free entry", "Saturday-morning market by the river.", "https://www.matakanavillage.co.nz"],
+  ["Brick Bay Sculpture Trail", -36.4010, 174.7220, "🗿", "art walk", "$", "Sculptures along a bush and farm trail, near Snells Beach.", "https://www.brickbay.co.nz"],
+].map(([name, lat, lon, emoji, tags, cost, note, url]) => ({ name, lat, lon, emoji, tags: tags.split(" "), cost, note, url }));
+const FEELS = [["animals", "🐾 Animals"], ["beach", "🏖️ Beach day"], ["walk", "🥾 Walks & waterfalls"], ["water", "♨️ Swim & hot pools"], ["thrills", "🎢 Thrills"], ["learn", "🔬 Learn something"], ["island", "⛴️ Island trip"], ["food", "🧺 Markets & food"], ["art", "🎨 Art"], ["free", "💸 Free"]];
+const ORIGINS = [["central", "Central Auckland", -36.8485, 174.7633], ["north", "North Shore", -36.7870, 174.7730], ["west", "West Auckland", -36.8790, 174.6310], ["east", "East Auckland", -36.9300, 174.9100], ["south", "South Auckland", -36.9930, 174.8800]];
+const RANGES = [["near", "Nearby (½ hour)", 30], ["hour", "Up to 1 hour", 60], ["day", "Day trip (up to 2½ hours, e.g. Hamilton Zoo)", 150]];
+const W_PREFS = "popcorn-parks-weekend";
+const wk = (() => { const b = { feels: [], range: "day", from: "central", wx: "sunny", lat: null, lon: null, more: 0 }; try { return { ...b, ...JSON.parse(localStorage.getItem(W_PREFS) || "{}"), more: 0 }; } catch { return b; } })();
+const saveWk = () => { try { localStorage.setItem(W_PREFS, JSON.stringify(wk)); } catch {} };
+// Road distance is about 1.25x the straight line around Auckland; average ~72 km/h door to door.
+function driveFrom(p) {
+  const o = wk.from === "me" && wk.lat != null ? [wk.lat, wk.lon] : (ORIGINS.find((x) => x[0] === wk.from) || ORIGINS[0]).slice(2);
+  const R = 6371, rad = (d) => (d * Math.PI) / 180;
+  const a = Math.sin(rad(p.lat - o[0]) / 2) ** 2 + Math.cos(rad(o[0])) * Math.cos(rad(p.lat)) * Math.sin(rad(p.lon - o[1]) / 2) ** 2;
+  const km = 2 * R * Math.asin(Math.sqrt(a)) * 1.25;
+  return { km: Math.round(km), min: Math.round((km / 72) * 60 + 5) };
+}
+function renderExplore() {
+  const el = $("#explore"); if (!el) return;
+  const max = (RANGES.find((r) => r[0] === wk.range) || RANGES[2])[2];
+  const list = PLACES.map((p) => ({ p, d: driveFrom(p) })).filter(({ p, d }) => d.min <= max
+      && (!wk.feels.length || wk.feels.some((f) => p.tags.includes(f)))
+      && (wk.wx !== "wet" || p.tags.includes("rainy")))
+    .map((x) => ({ ...x, score: (wk.feels.filter((f) => x.p.tags.includes(f)).length * 3) + (wk.feels.includes(x.p.tags[0]) ? 3 : 0) + (wk.wx === "showers" && x.p.tags.includes("rainy") ? 2 : 0) + (wk.wx === "sunny" && /beach|walk|water/.test(x.p.tags.join(" ")) ? 1 : 0) - x.d.min / 120 }))
+    .sort((a, b) => b.score - a.score);
+  const show = 9 + wk.more * 9;
+  const hm2 = (m) => (m < 60 ? `${m} min` : `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, "0")}`);
+  el.innerHTML = `<div class="filters">
+    <h3>What do you feel like doing?</h3>
+    <div class="grp"><span class="label">Feel like</span><div class="chips">${FEELS.map(([k, l]) => `<button type="button" class="chip small" data-act="wk-feel" data-k="${k}" aria-pressed="${wk.feels.includes(k)}">${l}</button>`).join("")}</div></div>
+    <div class="grp"><span class="label">How far will you go?</span><div class="chips">${RANGES.map(([k, l]) => `<button type="button" class="chip small" data-act="wk-range" data-k="${k}" aria-pressed="${wk.range === k}">${esc(l)}</button>`).join("")}</div></div>
+    <div class="grp"><span class="label">Starting from</span><div class="chips">${ORIGINS.map(([k, l]) => `<button type="button" class="chip small" data-act="wk-from" data-k="${k}" aria-pressed="${wk.from === k}">${esc(l)}</button>`).join("")}<button type="button" class="chip small" data-act="wk-me" aria-pressed="${wk.from === "me"}">📍 My location</button></div></div>
+    <div class="grp"><span class="label">Weather this weekend</span><div class="chips">${[["sunny", "☀️ Fine"], ["showers", "🌦️ Showers"], ["wet", "🌧️ Wet all day"]].map(([k, l]) => `<button type="button" class="chip small" data-act="wk-wx" data-k="${k}" aria-pressed="${wk.wx === k}">${l}</button>`).join("")}</div>
+      <span class="wx-note">Not sure? <a href="https://www.metservice.com/towns-cities/locations/auckland" target="_blank" rel="noopener">Check the MetService forecast</a>. Wet all day shows indoor places only; showers puts them first.</span></div>
+  </div>
+  <p class="source">${list.length} ${list.length === 1 ? "place" : "places"} within ${hm2(max)} of ${esc(wk.from === "me" ? "you" : (ORIGINS.find((x) => x[0] === wk.from) || ORIGINS[0])[1])}. Drive times are estimates; check opening hours before you go.</p>
+  ${list.length ? `<div class="plist">${list.slice(0, show).map(({ p, d }) => {
+    const added = state.acts.some((a) => norm(a.name) === norm(p.name));
+    return `<div class="place"><div class="top"><span class="emoji" aria-hidden="true">${p.emoji}</span><div><h3>${esc(p.name)}</h3><span class="drive">🚗 ${hm2(d.min)} · ${d.km} km · ${esc(p.cost)}</span></div></div>
+      <p>${esc(p.note)}</p>
+      <div class="tags">${p.tags.map((t) => `<span class="${t === "rainy" ? "rainy" : t === "free" ? "free" : ""}">${t === "rainy" ? "indoor" : esc(t)}</span>`).join("")}</div>
+      <div class="row">${added ? `<span class="in-pile">In your ideas</span>` : state.readOnly ? "" : `<button type="button" class="small primary" data-act="wk-add" data-name="${esc(p.name)}">Add to our ideas</button>`}<a class="small ghost" href="https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lon}" target="_blank" rel="noopener">Directions</a><a class="small ghost" href="${esc(p.url)}" target="_blank" rel="noopener">Website</a></div></div>`;
+  }).join("")}</div>${list.length > show ? `<div class="refresh-row"><button type="button" class="small" data-act="wk-more">Show more places</button></div>` : ""}`
+    : `<div class="empty"><p>Nothing fits that. Try going a bit further or picking fewer things.</p></div>`}`;
+}
+document.addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-act^='wk-']"); if (!b) return;
+  const tog = (arr, v) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
+  switch (b.dataset.act) {
+    case "wk-feel": wk.feels = tog(wk.feels, b.dataset.k); break;
+    case "wk-range": wk.range = b.dataset.k; break;
+    case "wk-from": wk.from = b.dataset.k; break;
+    case "wk-wx": wk.wx = b.dataset.k; break;
+    case "wk-more": wk.more++; renderExplore(); return;
+    case "wk-me":
+      if (!navigator.geolocation) { toast("Location isn't available here. Pick the nearest area instead."); return; }
+      navigator.geolocation.getCurrentPosition((pos) => { wk.lat = pos.coords.latitude; wk.lon = pos.coords.longitude; wk.from = "me"; saveWk(); renderExplore(); },
+        () => toast("Couldn't get your location. Pick the nearest area instead."), { timeout: 8000 });
+      return;
+    case "wk-add": {
+      const p = PLACES.find((x) => x.name === b.dataset.name); if (!p) return;
+      const category = p.tags.includes("beach") || p.tags.includes("walk") ? "parks" : p.tags.some((t) => ["thrills", "animals", "water", "learn"].includes(t)) && p.cost !== "Free" ? "kids" : "together";
+      const d = driveFrom(p);
+      await store.add("acts", { name: p.name, category, cost: p.cost, where: p.name, notes: `${p.note} About ${d.min} min drive.`, votes: {}, status: "idea", createdAt: now() });
+      toast(`Added ${p.name} to your weekend ideas`); return;
+    }
+  }
+  wk.more = 0; saveWk(); renderExplore();
+});
+
+/* ---------- Movie night mode ---------- */
+const MN_KEY = "popcorn-parks-movienight";
+const SNACKS = ["🍿 Popcorn", "🥤 Drinks", "🍫 Treats", "🛋️ Blankets and pillows", "💡 Lights down", "📱 Phones away"];
+const mn = (() => { try { return { time: "19:00", done: {}, ...JSON.parse(localStorage.getItem(MN_KEY) || "{}") }; } catch { return { time: "19:00", done: {} }; } })();
+const saveMn = () => { try { localStorage.setItem(MN_KEY, JSON.stringify(mn)); } catch {} };
+let mnTimer = null;
+function renderMovieNight() {
+  const next = state.movies.find((m) => m.status === "next");
+  const el = $("#movienight"); if (!el) return;
+  if (!next) { el.remove(); return; }
+  const d = WATCH_INFO[norm(next.title)] || {};
+  const when = new Date(`${next.night || todayISO()}T${mn.time}`);
+  const tick = () => {
+    const c = $("#mn-count"); if (!c) { clearInterval(mnTimer); return; }
+    const ms = when - Date.now();
+    if (ms <= 0) { c.textContent = ms > -3 * 3600e3 ? "It's movie time! 🎬" : "Hope it was a good one"; return; }
+    const h = Math.floor(ms / 3600e3), m = Math.floor((ms % 3600e3) / 60e3), sec = Math.floor((ms % 60e3) / 1000);
+    c.textContent = h >= 24 ? `${Math.floor(h / 24)} day${h >= 48 ? "s" : ""} ${h % 24} h to go` : `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+  };
+  const p = picker(), by = crewById(next.pickedBy);
+  el.innerHTML = `<button type="button" class="x" data-act="mn-close" aria-label="Close">✕</button><div class="box">
+    <span class="label">${esc(fmtDate(next.night) || "Movie night")}${by ? ` · ${esc(by.name)}'s pick` : ""}</span>
+    ${poster(next.title)}
+    <h2>${esc(next.title)}</h2>
+    <div class="countdown" id="mn-count" aria-live="off"></div>
+    <label class="f" style="color:#fff">Starts at <input type="time" id="mn-time" value="${esc(mn.time)}" style="width:auto"></label>
+    <div class="sub mono" style="color:rgb(255 255 255 / .75)">${esc([next.runtime || d.r ? (next.runtime || d.r) + " min" : "", d.nz ? "NZ " + d.nz : d.c || "", (next.runtime || d.r) ? "finishes about " + clock(new Date(when.getTime() + (next.runtime || d.r) * 60000)) : ""].filter(Boolean).join(" · "))}</div>
+    ${d.t ? whereLine(d, true) : ""}
+    <div class="snacks"><span class="label">Get ready</span>${SNACKS.map((x, i) => `<label class="${mn.done[i] ? "done" : ""}"><input type="checkbox" data-act="mn-snack" data-i="${i}" ${mn.done[i] ? "checked" : ""}><span>${x}</span></label>`).join("")}</div>
+  </div>`;
+  $("#mn-time").onchange = (e) => { mn.time = e.target.value || "19:00"; saveMn(); renderMovieNight(); };
+  clearInterval(mnTimer); tick(); mnTimer = setInterval(tick, 1000);
+}
+function openMovieNight() { $("#movienight")?.remove(); const el = document.createElement("div"); el.id = "movienight"; el.className = "overlay"; el.setAttribute("role", "dialog"); el.setAttribute("aria-label", "Movie night"); document.body.appendChild(el); renderMovieNight(); }
+
+/* ---------- Kids' picks: swipe yes or no on G and PG films ---------- */
+const kp = { who: null, idx: 0 };
+function kidQueue() {
+  const watched = watchedKeys();
+  return Object.values(MOVIE_DATA).filter((d) => kidSafe(d) && !watched.has(norm(d.t)) && !(inPile(d.t)?.votes || {})[kp.who] && !skipped.has("kp:" + kp.who + ":" + norm(d.t)))
+    .sort((a, b) => (b.v || 0) - (a.v || 0));
+}
+function renderKids() {
+  const el = $("#kidpicks"); if (!el) return;
+  const crew = crewSorted();
+  if (!kp.who || !crewById(kp.who)) {
+    el.innerHTML = `<button type="button" class="x" data-act="kp-close" aria-label="Close">✕</button><div class="box"><span class="label">Kids' picks</span><h2>Who's choosing?</h2>
+      ${crew.length ? `<div class="kid-who">${crew.map((c) => `<button type="button" class="vote" data-act="kp-who" data-who="${c.id}"><span class="dot" style="background:${esc(c.color)};opacity:1;filter:none">${initial(c.name)}</span>${esc(c.name)}</button>`).join("")}</div>` : `<p>Add your family on the Family tab first.</p>`}
+      <p style="opacity:.7;font-size:.85rem">Swipe right or tap 👍 for films you'd like to watch. They go in the pile with your vote. Only G and PG films show up.</p></div>`;
+    return;
+  }
+  const q = kidQueue(), d = q[0], who = crewById(kp.who);
+  el.innerHTML = `<button type="button" class="x" data-act="kp-close" aria-label="Close">✕</button><div class="box">
+    <span class="label">${esc(who.name)} is choosing · <a href="#" data-act="kp-switch" style="color:inherit">switch</a></span>
+    ${d ? `<div class="swipe" id="kp-card">${poster(d.t)}</div><h2>${esc(d.t)}</h2>
+      <div class="sub mono" style="color:rgb(255 255 255 / .75)">${esc([d.y, d.r ? d.r + " min" : "", d.nz ? "NZ " + d.nz : d.c, (d.g || []).slice(0, 2).map((x) => GENRES[x]).join(" · ")].filter(Boolean).join(" · "))}</div>
+      <div class="kid-btns"><button type="button" class="no" data-act="kp-no" data-k="${esc(norm(d.t))}" aria-label="Not for me">👎</button><button type="button" class="yes" data-act="kp-yes" data-k="${esc(norm(d.t))}" aria-label="Yes please">👍</button></div>
+      <p style="opacity:.6;font-size:.8rem">${q.length - 1} more to go</p>`
+      : `<h2>That's every film!</h2><p>All the G and PG films have had a vote from ${esc(who.name)}.</p>`}
+  </div>`;
+  const card = $("#kp-card"); if (!card) return;
+  let x0 = null, dx = 0;
+  card.onpointerdown = (e) => { x0 = e.clientX; card.setPointerCapture(e.pointerId); card.style.transition = "none"; };
+  card.onpointermove = (e) => { if (x0 == null) return; dx = e.clientX - x0; card.style.transform = `translateX(${dx}px) rotate(${dx / 18}deg)`; };
+  card.onpointerup = () => { card.style.transition = ""; card.style.transform = ""; if (Math.abs(dx) > 80) document.querySelector(dx > 0 ? "[data-act=kp-yes]" : "[data-act=kp-no]").click(); x0 = null; dx = 0; };
+}
+function openKids() { $("#kidpicks")?.remove(); const el = document.createElement("div"); el.id = "kidpicks"; el.className = "overlay"; el.setAttribute("role", "dialog"); el.setAttribute("aria-label", "Kids' picks"); document.body.appendChild(el); renderKids(); }
+
+document.addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-act^='mn-'], [data-act^='kp-']"); if (!b) return;
+  switch (b.dataset.act) {
+    case "mn-open": openMovieNight(); break;
+    case "mn-close": clearInterval(mnTimer); $("#movienight")?.remove(); break;
+    case "mn-snack": mn.done[b.dataset.i] = b.checked; saveMn(); b.closest("label").classList.toggle("done", b.checked); break;
+    case "kp-open": openKids(); break;
+    case "kp-close": $("#kidpicks")?.remove(); break;
+    case "kp-switch": e.preventDefault(); kp.who = null; renderKids(); break;
+    case "kp-who": kp.who = b.dataset.who; renderKids(); break;
+    case "kp-no": case "kp-yes": {
+      const d = MOVIE_DATA[b.dataset.k]; if (!d) return;
+      skipped.add("kp:" + kp.who + ":" + b.dataset.k);
+      $("#kp-card")?.classList.add(b.dataset.act === "kp-yes" ? "gone-r" : "gone-l");
+      if (b.dataset.act === "kp-yes" && !state.readOnly) {
+        let m = inPile(d.t);
+        if (!m) { await store.add("movies", { title: d.t, year: d.y || null, runtime: d.r || null, genre: (d.g || []).slice(0, 2).map((x) => GENRES[x]).join(" "), suggestedBy: kp.who, votes: { [kp.who]: true }, status: "pool", createdAt: now() }); }
+        else if (!(m.votes || {})[kp.who]) { await store.update(`movies/${m.id}`, { votes: { ...(m.votes || {}), [kp.who]: true } }); }
+      }
+      setTimeout(renderKids, 230); break;
+    }
+  }
+});
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") { clearInterval(mnTimer); $("#movienight")?.remove(); $("#kidpicks")?.remove(); } });
+
+/* ---------- Family stats (History tab) ---------- */
+function renderStats() {
+  const el = $("#fam-stats"); if (!el) return;
+  const watched = state.movies.filter((m) => m.status === "watched");
+  const done = state.acts.filter((a) => a.status === "done");
+  if (!watched.length && !done.length) { el.innerHTML = ""; return; }
+  const yr = String(new Date().getFullYear());
+  const thisYear = watched.filter((m) => String(m.watchedOn || "").startsWith(yr));
+  const mins = thisYear.reduce((a, m) => a + (Number(m.runtime) || WATCH_INFO[norm(m.title)]?.r || 0), 0);
+  const rated = watched.filter((m) => m.rating);
+  const avg = rated.length ? rated.reduce((a, m) => a + m.rating, 0) / rated.length : 0;
+  const picks = {}; rated.forEach((m) => { if (m.pickedBy && crewById(m.pickedBy)) (picks[m.pickedBy] ||= []).push(m.rating); });
+  const bestPicker = Object.entries(picks).map(([id, r]) => [id, r.reduce((a, b) => a + b, 0) / r.length, r.length]).sort((a, b) => b[1] - a[1] || b[2] - a[2])[0];
+  const gc = {}; watched.forEach((m) => (WATCH_INFO[norm(m.title)]?.g || []).forEach((g) => (gc[g] = (gc[g] || 0) + 1)));
+  const topG = Object.entries(gc).sort((a, b) => b[1] - a[1]).slice(0, 2).map(([g]) => GENRES[g]).filter(Boolean);
+  const dcSeen = DC_ANIMATED.filter((m) => inPile(m.title)?.status === "watched").length;
+  const best = rated.slice().sort((a, b) => b.rating - a.rating || String(b.watchedOn).localeCompare(String(a.watchedOn)))[0];
+  el.innerHTML = `<div class="stats">
+    <div class="mstat"><b>${thisYear.length}</b><span>films watched in ${yr}</span></div>
+    <div class="mstat"><b>${hm(mins)}</b><span>of movies in ${yr}</span></div>
+    <div class="mstat"><b>${avg ? avg.toFixed(1) + " ★" : "–"}</b><span>average rating</span></div>
+    ${bestPicker ? `<div class="mstat"><b>${esc(crewById(bestPicker[0]).name)}</b><span>best picker (${bestPicker[1].toFixed(1)} ★ over ${bestPicker[2]})</span></div>` : ""}
+    ${topG.length ? `<div class="mstat"><b>${esc(topG.join(" & "))}</b><span>your favourite genres</span></div>` : ""}
+    ${best ? `<div class="mstat"><b style="font-size:1rem">${esc(best.title)}</b><span>top rated (${best.rating} ★)</span></div>` : ""}
+    <div class="mstat"><b>${done.length}</b><span>weekend outings done</span></div>
+    <div class="mstat"><b>${dcSeen} / ${DC_ANIMATED.length}</b><span>DC animated films seen</span></div>
+  </div>`;
+}
+
+function render() { renderTickets(); renderServiceMonth(); renderMovies(); renderExplore(); renderStats(); if ($("#movienight")) renderMovieNight(); if ($("#kidpicks")) renderKids(); renderActs(); renderDiscover(); renderTonight(); renderMarathon(); renderCrew(); renderHistory(); }
 
 /* ---------- Routing ---------- */
 function route() {

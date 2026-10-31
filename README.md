@@ -12,6 +12,7 @@ A family planner for movie nights and weekend activities. It is a single HTML fi
 - Book a movie for a date, then mark it watched and give it a star rating, which passes the pick to the next person
 
 **Weekend activities**
+- **Where shall we go?** Pick what you feel like (animals, beach, walks and waterfalls, hot pools, thrills, learning, island trips, markets, art, free), how far you'll go (nearby, up to an hour, or a day trip of up to 2½ hours such as Hamilton Zoo or Hobbiton), where you're starting from (or your location) and the weather. About 45 real places around Auckland, Waikato and Northland show with drive-time estimates, cost, directions and an Add to our ideas button.
 - Ideas in three categories: parks and outdoors, paid activities for kids, and things to do together
 - Cost, location and notes on each idea, plus votes from each family member
 - Plan an idea for a specific day, then mark it done and rate it
@@ -30,6 +31,14 @@ A family planner for movie nights and weekend activities. It is a single HTML fi
 **Movie posters**: tiles show real poster art when the page has a downloaded image for the title in `posters/` (the page's content security policy blocks remote images, so posters are published with the page). Titles without one keep the coloured tile. To add posters, run `python3 tools/fetch_posters.py`; it reads the page's built-in lists plus `tools/extra-titles.json`, finds each film on TMDB with the TMDB API (set `TMDB_API_KEY` to a free TMDB API key, or add the token as a network secret for api.themoviedb.org in a Claude cloud environment), downloads the poster from image.tmdb.org and updates the `POSTERS` map in `index.html`. Re-running only fetches new titles; `--title "Name" --year 2024` adds one. Poster images come from [TMDB](https://www.themoviedb.org/).
 
 **Which service this month?**: a card above the pile ranks streaming services by how many unwatched films in your pile they have (films with more votes count for more), so you know which subscription to switch on.
+
+**Movie night mode**: a 🍿 button on the Next movie night ticket opens a full-screen countdown with the poster, start time, finish time, where to watch and a get-ready checklist.
+
+**Kids' picks**: in Discover > Tonight, kids pick their name and swipe (or tap 👍/👎) through G and PG films; a yes puts the film in the pile with their vote.
+
+**Streaming changes**: after each `fetch_details.py --where` refresh, the Which service card says when a film in your pile has arrived on or left a service.
+
+**Family stats** at the top of History: films and hours this year, average rating, best picker, favourite genres, top-rated film, outings and DC progress. "Because you liked…" follows who's watching, using films they voted for.
 
 **History** of every movie watched and activity done, with ratings.
 
