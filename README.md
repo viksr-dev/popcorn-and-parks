@@ -1,3 +1,35 @@
 # Popcorn & Parks
 
-A family planner for movie nights and weekend activities.
+A family planner for movie nights and weekend activities. It is a single HTML file with no build step and no dependencies.
+
+## Features
+
+**Movie nights**
+- Family members take turns picking the movie, in an order you can rearrange, with a "skip this turn" option
+- A shared pile of movie suggestions with year, runtime, genre and who suggested it
+- Everyone can vote on each movie; sort by votes, newest or shortest
+- "Pick one at random" spins the pile, weighted towards movies with more votes
+- Book a movie for a date, then mark it watched and give it a star rating, which passes the pick to the next person
+
+**Weekend activities**
+- Ideas in three categories: parks and outdoors, paid activities for kids, and things to do together
+- Cost, location and notes on each idea, plus votes from each family member
+- Plan an idea for a specific day, then mark it done and rate it
+
+**Discover**
+- Top 10 movies in New Zealand on Netflix, Prime Video, Disney+, HBO Max and Apple TV, read from a `charts/streaming` document in the shared database so the lists can be refreshed without changing the page
+- A list of movies from IMDb's Top 250 released from 1990 onwards, filterable by decade and by family-friendly rating (G or PG)
+- Every DC animated feature film to date (about 100), filterable by line: DC Universe Animated Originals, cinema releases, kids and LEGO films, and others, with a watched count
+- One tap adds any of them to the movie pile
+
+**About this movie**: on claude.ai, an About button on any movie asks Claude for a spoiler-free synopsis, the NZ and US age ratings, an approximate IMDb score and a note on suitability for kids. Answers are saved in the shared database (`info` collection) so each movie is looked up once.
+
+**History** of every movie watched and activity done, with ratings.
+
+Starter buttons fill an empty planner with a few family movies and general activity ideas you can delete.
+
+## Running it
+
+Open `index.html` in a browser. Data is saved in that browser's local storage.
+
+When the page is published as a Claude artifact with the `db` capability, it saves to the artifact's shared database instead, so everyone who opens the link sees the same plans.

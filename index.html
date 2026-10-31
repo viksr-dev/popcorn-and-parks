@@ -1,0 +1,832 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>Popcorn &amp; Parks</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: one column app. A "tonight / this weekend" ticket strip up top, then tabs for Movies, Weekend, Crew and History. */
+:root {
+  --bg: #f1f5f4;
+  --surface: #ffffff;
+  --sunk: #e4ecea;
+  --fg: #13221f;
+  --muted: #5a6b67;
+  --line: #d3dedb;
+  --accent: #0f766e;
+  --accent-fg: #ffffff;
+  --gold: #e9a100;
+  --gold-soft: #fdf1d3;
+  --parks: #3f8f3a;
+  --kids: #c2410c;
+  --together: #6d4fc9;
+  --danger: #b42318;
+  --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --body: "Figtree", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r: 12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1615; --surface: #16211f; --sunk: #1d2a28; --fg: #e4eeec; --muted: #94a8a3;
+    --line: #2a3a37; --accent: #3fb8ac; --accent-fg: #062a26; --gold: #f5b82e; --gold-soft: #3a2f12;
+    --parks: #7cc576; --kids: #f08a55; --together: #a993f0; --danger: #f97066; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1615; --surface: #16211f; --sunk: #1d2a28; --fg: #e4eeec; --muted: #94a8a3;
+  --line: #2a3a37; --accent: #3fb8ac; --accent-fg: #062a26; --gold: #f5b82e; --gold-soft: #3a2f12;
+  --parks: #7cc576; --kids: #f08a55; --together: #a993f0; --danger: #f97066; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.5 var(--body); }
+.wrap { max-width: 860px; margin: 0 auto; padding-block: 20px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 20px; }
+h1, h2, h3 { font-family: var(--display); margin: 0; text-wrap: balance; line-height: 1.15; }
+h1 { font-size: 1.9rem; font-weight: 800; letter-spacing: -0.01em; }
+h2 { font-size: 1.25rem; font-weight: 800; }
+h3 { font-size: 1.05rem; font-weight: 600; }
+.mono { font-family: var(--mono); font-size: 0.82rem; font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; color: var(--muted); }
+header.top { display: flex; align-items: end; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+header.top p { margin: 4px 0 0; }
+.status { font-size: 0.8rem; }
+
+/* Ticket strip */
+.tickets { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.ticket { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px 18px; display: grid; gap: 6px; min-width: 0; }
+.ticket::before, .ticket::after { content: ""; position: absolute; top: 50%; width: 18px; height: 18px; border-radius: 50%; background: var(--bg); border: 1px solid var(--line); transform: translateY(-50%); }
+.ticket::before { left: -10px; clip-path: inset(0 0 0 50%); }
+.ticket::after { right: -10px; clip-path: inset(0 50% 0 0); }
+.ticket.turn { background: var(--gold-soft); border-color: var(--gold); }
+.ticket .big { font-family: var(--display); font-weight: 800; font-size: 1.35rem; line-height: 1.2; overflow-wrap: anywhere; }
+
+/* Tabs */
+nav.tabs { display: flex; gap: 2px; background: var(--sunk); padding: 4px; border-radius: 999px; overflow-x: auto; }
+nav.tabs a { flex: 1; text-align: center; padding: 8px 4px; font-size: 0.86rem; border-radius: 999px; color: var(--muted); text-decoration: none; font-weight: 600; white-space: nowrap; }
+nav.tabs a[aria-current="page"] { background: var(--surface); color: var(--fg); box-shadow: 0 1px 2px rgb(0 0 0 / 0.08); }
+nav.tabs a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+section.view { display: grid; gap: 16px; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.between { justify-content: space-between; }
+
+/* Forms */
+form.add { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; display: grid; gap: 10px; }
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; }
+.fields .wide { grid-column: 1 / -1; }
+label.f { display: grid; gap: 3px; font-size: 0.78rem; font-weight: 600; color: var(--muted); }
+input, select { font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; width: 100%; min-width: 0; }
+button { font: inherit; font-weight: 600; cursor: pointer; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); padding: 7px 12px; }
+button:hover { border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.ghost { background: transparent; border-color: transparent; color: var(--muted); padding: 6px 8px; }
+button.ghost:hover { color: var(--fg); }
+button.danger:hover { color: var(--danger); border-color: var(--danger); }
+button.small { font-size: 0.82rem; padding: 5px 10px; }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Cards */
+.list { display: grid; gap: 10px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; display: grid; gap: 10px; min-width: 0; }
+.card.next { border-color: var(--accent); box-shadow: inset 4px 0 0 var(--accent); }
+.card .title { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.card .title h3 { overflow-wrap: anywhere; }
+.meta { display: flex; gap: 6px 14px; flex-wrap: wrap; color: var(--muted); font-size: 0.85rem; }
+.notes { margin: 0; color: var(--muted); font-size: 0.9rem; overflow-wrap: anywhere; }
+.tag { display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 700; padding: 2px 9px; border-radius: 999px; border: 1px solid currentColor; }
+.tag.parks { color: var(--parks); } .tag.kids { color: var(--kids); } .tag.together { color: var(--together); }
+.tag.date { color: var(--accent); }
+.votes { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.vote { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 3px 10px 3px 4px; font-size: 0.82rem; background: transparent; }
+.vote .dot { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 0.7rem; color: #fff; font-weight: 700; opacity: 0.35; }
+.vote[aria-pressed="true"] { border-color: var(--accent); background: var(--sunk); }
+.vote[aria-pressed="true"] .dot { opacity: 1; }
+.count { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { border-radius: 999px; font-size: 0.85rem; }
+.chip[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.inline { display: flex; gap: 8px; flex-wrap: wrap; align-items: end; background: var(--sunk); border-radius: 8px; padding: 10px; }
+.inline label.f { flex: 1 1 140px; }
+.stars { display: inline-flex; gap: 2px; }
+.stars button { border: none; background: none; padding: 2px; font-size: 1.2rem; line-height: 1; color: var(--line); }
+.stars button.on { color: var(--gold); }
+.stars.readonly { color: var(--gold); letter-spacing: 1px; }
+
+.empty { border: 1.5px dashed var(--line); border-radius: var(--r); padding: 22px; text-align: center; display: grid; gap: 10px; justify-items: center; color: var(--muted); }
+.empty p { margin: 0; max-width: 46ch; }
+
+/* Crew */
+.crew li { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+.crew ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.avatar { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-weight: 700; flex: none; }
+.crew .name { flex: 1; min-width: 0; font-weight: 600; overflow-wrap: anywhere; }
+.pill-turn { font-size: 0.72rem; font-weight: 700; background: var(--gold); color: #2b1d00; padding: 2px 8px; border-radius: 999px; }
+.swatches { display: flex; gap: 6px; }
+.swatches input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.swatches label { width: 26px; height: 26px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; }
+.swatches input:checked + label { border-color: var(--fg); }
+.swatches input:focus-visible + label { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.hist { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 14px; align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.hist .what { min-width: 0; overflow-wrap: anywhere; }
+.chart { display: grid; gap: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 4px 14px; }
+.chart-row { display: grid; grid-template-columns: 2.2em 1fr auto; gap: 10px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--line); }
+.chart-row:last-child { border-bottom: none; }
+.chart-row .rank { font-family: var(--display); font-weight: 800; font-size: 1.15rem; color: var(--accent); text-align: right; font-variant-numeric: tabular-nums; }
+.chart-row .what { min-width: 0; overflow-wrap: anywhere; }
+.chart-row .sub { color: var(--muted); font-size: 0.82rem; }
+.cert { font-family: var(--mono); font-size: 0.72rem; border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; }
+.cert.fam { color: var(--parks); border-color: var(--parks); }
+.disc { display: grid; gap: 14px; }
+.about { grid-column: 1 / -1; background: var(--sunk); border-radius: 8px; padding: 10px 12px; display: grid; gap: 6px; font-size: 0.9rem; }
+.about p { margin: 0; }
+.about .fine { font-size: 0.75rem; color: var(--muted); }
+.badges { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.badge { font-size: 0.75rem; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); }
+.badge.score { color: #2b1d00; background: var(--gold); border-color: var(--gold); }
+.row-btns { display: flex; gap: 4px; align-items: center; justify-content: end; flex-wrap: wrap; }
+.source { font-size: 0.8rem; color: var(--muted); margin: 0; }
+.source a { color: inherit; }
+.in-pile { font-size: 0.8rem; color: var(--muted); white-space: nowrap; }
+.toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 9px 16px; border-radius: 999px; font-weight: 600; font-size: 0.9rem; z-index: 20; max-width: calc(100% - 32px); }
+@media (prefers-reduced-motion: no-preference) {
+  .card { transition: border-color .15s; }
+  .toast { animation: rise .2s ease-out; }
+  @keyframes rise { from { transform: translate(-50%, 8px); opacity: 0; } }
+}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Popcorn &amp; Parks</h1>
+      <p class="muted">Take turns picking the movie, vote on ideas, and plan the weekend.</p>
+    </div>
+    <span class="status muted" id="status">Loading your plans…</span>
+  </header>
+
+  <div class="tickets" id="tickets"></div>
+
+  <nav class="tabs" aria-label="Sections">
+    <a href="#movies" data-tab="movies">Movies</a>
+    <a href="#weekend" data-tab="weekend">Weekend</a>
+    <a href="#discover" data-tab="discover">Discover</a>
+    <a href="#crew" data-tab="crew">Family</a>
+    <a href="#history" data-tab="history">History</a>
+  </nav>
+
+  <section class="view" id="view-movies" hidden>
+    <form class="add" id="movie-form">
+      <h2>Suggest a movie</h2>
+      <div class="fields">
+        <label class="f wide">Title<input id="m-title" required maxlength="120" placeholder="e.g. Paddington 2" autocomplete="off"></label>
+        <label class="f">Year<input id="m-year" inputmode="numeric" maxlength="4" placeholder="2017"></label>
+        <label class="f">Minutes<input id="m-runtime" inputmode="numeric" maxlength="3" placeholder="104"></label>
+        <label class="f">Genre<input id="m-genre" maxlength="40" placeholder="Family comedy"></label>
+        <label class="f">Suggested by<select id="m-by"></select></label>
+      </div>
+      <div class="row"><button class="primary" type="submit">Add to the pile</button></div>
+    </form>
+    <div class="row between">
+      <h2>The pile</h2>
+      <div class="row">
+        <select id="m-sort" aria-label="Sort movies"><option value="votes">Most votes</option><option value="new">Newest</option><option value="short">Shortest</option></select>
+        <button type="button" id="spin">Pick one at random</button>
+      </div>
+    </div>
+    <div class="list" id="movie-list"></div>
+  </section>
+
+  <section class="view" id="view-weekend" hidden>
+    <form class="add" id="act-form">
+      <h2>Add a weekend idea</h2>
+      <div class="fields">
+        <label class="f wide">What is it?<input id="a-name" required maxlength="120" placeholder="e.g. Picnic and kite flying" autocomplete="off"></label>
+        <label class="f">Category<select id="a-cat">
+          <option value="parks">Parks &amp; outdoors</option>
+          <option value="kids">Paid activities for kids</option>
+          <option value="together">Things to do together</option>
+        </select></label>
+        <label class="f">Cost<input id="a-cost" maxlength="40" placeholder="Free, or 8 per child"></label>
+        <label class="f">Where<input id="a-where" maxlength="80" placeholder="Riverside Park"></label>
+        <label class="f wide">Notes<input id="a-notes" maxlength="200" placeholder="Bring a ball, booking needed, best on dry days…"></label>
+      </div>
+      <div class="row"><button class="primary" type="submit">Add idea</button></div>
+    </form>
+    <div class="row between">
+      <h2>Ideas</h2>
+      <div class="chips" id="cat-filter" role="group" aria-label="Filter by category"></div>
+    </div>
+    <div class="list" id="act-list"></div>
+  </section>
+
+  <section class="view crew" id="view-crew" hidden>
+    <form class="add" id="crew-form">
+      <h2>Who's in the family?</h2>
+      <p class="muted" style="margin:0">Movie picks rotate through this list in order. Everyone can vote on movies and weekend ideas.</p>
+      <div class="fields">
+        <label class="f">Name<input id="c-name" required maxlength="30" placeholder="e.g. Mum" autocomplete="off"></label>
+        <div class="f"><span class="label">Colour</span><div class="swatches" id="c-colors"></div></div>
+      </div>
+      <div class="row"><button class="primary" type="submit">Add person</button></div>
+    </form>
+    <h2>Picking order</h2>
+    <div id="crew-list"></div>
+  </section>
+
+  <section class="view" id="view-discover" hidden>
+    <div class="chips" id="disc-switch" role="group" aria-label="Which list">
+      <button type="button" class="chip" data-act="disc" data-d="streaming" aria-pressed="true">Streaming top 10</button>
+      <button type="button" class="chip" data-act="disc" data-d="imdb" aria-pressed="false">IMDb top rated</button>
+      <button type="button" class="chip" data-act="disc" data-d="dc" aria-pressed="false">DC animated</button>
+    </div>
+    <div class="disc" data-d="streaming">
+    <div class="row between">
+      <h2>Top 10 streaming in New Zealand</h2>
+      <div class="chips" id="svc-filter" role="group" aria-label="Streaming service"></div>
+    </div>
+    <div id="streaming"></div>
+    </div>
+    <div class="disc" data-d="imdb" hidden>
+    <div class="row between">
+      <h2>Top rated on IMDb, 1990 to today</h2>
+      <div class="chips" id="era-filter" role="group" aria-label="Decade"></div>
+    </div>
+    <label class="row" style="gap:6px;font-size:.9rem"><input type="checkbox" id="fam-only" style="width:auto"> Family-friendly only (rated G or PG)</label>
+    <div id="imdb"></div>
+    <p class="source" id="imdb-note">Picked from IMDb's Top 250 chart, newest movies first within each decade. Check the <a href="https://www.imdb.com/chart/top/" target="_blank" rel="noopener">live chart</a> for current rankings.</p>
+    </div>
+    <div class="disc" data-d="dc" hidden>
+    <div class="row between">
+      <h2>DC animated movies</h2>
+      <div class="chips" id="dc-filter" role="group" aria-label="DC film line"></div>
+    </div>
+    <label class="row" style="gap:6px;font-size:.9rem"><input type="checkbox" id="dc-hide" style="width:auto"> Hide ones we've watched</label>
+    <div id="dc"></div>
+    <p class="source">Every animated DC feature film released to date, in release order. Source: <a href="https://en.wikipedia.org/wiki/List_of_films_based_on_DC_Comics_publications" target="_blank" rel="noopener">Wikipedia</a>.</p>
+    </div>
+  </section>
+
+  <section class="view" id="view-history" hidden>
+    <h2>What we've done</h2>
+    <div id="history-list"></div>
+  </section>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const COLORS = ["#0f766e", "#c2410c", "#6d4fc9", "#be185d", "#2563eb", "#a16207", "#3f8f3a", "#475569"];
+const CATS = { parks: "Parks & outdoors", kids: "Paid activities for kids", together: "Things to do together" };
+const IMDB_TOP = [
+  ["Goodfellas", 1990, 146, "R"], ["The Silence of the Lambs", 1991, 118, "R"], ["Terminator 2: Judgment Day", 1991, 137, "R"],
+  ["Reservoir Dogs", 1992, 99, "R"], ["Schindler's List", 1993, 195, "R"], ["Jurassic Park", 1993, 127, "PG-13"],
+  ["The Shawshank Redemption", 1994, 142, "R"], ["Pulp Fiction", 1994, 154, "R"], ["Forrest Gump", 1994, 142, "PG-13"],
+  ["The Lion King", 1994, 88, "G"], ["Léon: The Professional", 1994, 110, "R"], ["Se7en", 1995, 127, "R"],
+  ["The Usual Suspects", 1995, 106, "R"], ["Toy Story", 1995, 81, "G"], ["Heat", 1995, 170, "R"],
+  ["Princess Mononoke", 1997, 134, "PG-13"], ["Life Is Beautiful", 1997, 116, "PG-13"], ["Good Will Hunting", 1997, 126, "R"],
+  ["Saving Private Ryan", 1998, 169, "R"], ["American History X", 1998, 119, "R"], ["The Matrix", 1999, 136, "R"],
+  ["Fight Club", 1999, 139, "R"], ["The Green Mile", 1999, 189, "R"], ["The Sixth Sense", 1999, 107, "PG-13"],
+  ["Gladiator", 2000, 155, "R"], ["Memento", 2000, 113, "R"], ["Spirited Away", 2001, 125, "PG"],
+  ["The Lord of the Rings: The Fellowship of the Ring", 2001, 178, "PG-13"], ["Amélie", 2001, 122, "R"],
+  ["The Lord of the Rings: The Two Towers", 2002, 179, "PG-13"], ["City of God", 2002, 130, "R"], ["The Pianist", 2002, 150, "R"],
+  ["The Lord of the Rings: The Return of the King", 2003, 201, "PG-13"], ["Finding Nemo", 2003, 100, "G"],
+  ["Howl's Moving Castle", 2004, 119, "PG"], ["Batman Begins", 2005, 140, "PG-13"], ["The Departed", 2006, 151, "R"],
+  ["The Prestige", 2006, 130, "PG-13"], ["Ratatouille", 2007, 111, "G"], ["WALL·E", 2008, 98, "G"],
+  ["The Dark Knight", 2008, 152, "PG-13"], ["Up", 2009, 96, "PG"], ["Inglourious Basterds", 2009, 153, "R"],
+  ["Inception", 2010, 148, "PG-13"], ["Toy Story 3", 2010, 103, "G"], ["How to Train Your Dragon", 2010, 98, "PG"],
+  ["The Intouchables", 2011, 112, "R"], ["Django Unchained", 2012, 165, "R"], ["Interstellar", 2014, 169, "PG-13"],
+  ["Whiplash", 2014, 106, "R"], ["The Grand Budapest Hotel", 2014, 99, "R"], ["Mad Max: Fury Road", 2015, 120, "R"],
+  ["Inside Out", 2015, 95, "PG"], ["Your Name", 2016, 106, "PG"], ["Coco", 2017, 105, "PG"],
+  ["Spider-Man: Into the Spider-Verse", 2018, 117, "PG"], ["Avengers: Infinity War", 2018, 149, "PG-13"],
+  ["Avengers: Endgame", 2019, 181, "PG-13"], ["Parasite", 2019, 132, "R"], ["Joker", 2019, 122, "R"],
+  ["Top Gun: Maverick", 2022, 130, "PG-13"], ["Spider-Man: Across the Spider-Verse", 2023, 140, "PG"],
+  ["Oppenheimer", 2023, 180, "R"], ["Dune: Part Two", 2024, 166, "PG-13"], ["The Wild Robot", 2024, 102, "PG"],
+].map(([title, year, runtime, cert]) => ({ title, year, runtime, cert }));
+const DC_LINES = { orig: "DC Universe Animated Original", cinema: "In cinemas", kids: "Kids & LEGO", other: "Other features" };
+const DC_ANIMATED = [
+  ["Batman: Mask of the Phantasm", 1993, "cinema"], ["Batman & Mr. Freeze: SubZero", 1998, "other"], ["Batman Beyond: Return of the Joker", 2000, "other"],
+  ["Batman: Mystery of the Batwoman", 2003, "other"], ["The Batman vs. Dracula", 2005, "other"], ["Superman: Brainiac Attacks", 2006, "other"],
+  ["Teen Titans: Trouble in Tokyo", 2006, "other"], ["Superman: Doomsday", 2007, "orig"], ["Justice League: The New Frontier", 2008, "orig"],
+  ["Batman: Gotham Knight", 2008, "orig"], ["Wonder Woman", 2009, "orig"], ["Green Lantern: First Flight", 2009, "orig"],
+  ["Superman/Batman: Public Enemies", 2009, "orig"], ["Justice League: Crisis on Two Earths", 2010, "orig"], ["Batman: Under the Red Hood", 2010, "orig"],
+  ["Superman/Batman: Apocalypse", 2010, "orig"], ["All-Star Superman", 2011, "orig"], ["Green Lantern: Emerald Knights", 2011, "orig"],
+  ["Batman: Year One", 2011, "orig"], ["Justice League: Doom", 2012, "orig"], ["Superman vs. The Elite", 2012, "orig"],
+  ["Batman: The Dark Knight Returns – Part 1", 2012, "orig"], ["Batman: The Dark Knight Returns – Part 2", 2013, "orig"], ["Superman: Unbound", 2013, "orig"],
+  ["Justice League: The Flashpoint Paradox", 2013, "orig"], ["Lego Batman: The Movie – DC Super Heroes Unite", 2013, "kids"],
+  ["Justice League: War", 2014, "orig"], ["Son of Batman", 2014, "orig"], ["Batman: Assault on Arkham", 2014, "orig"],
+  ["JLA Adventures: Trapped in Time", 2014, "kids"], ["Lego DC Comics Super Heroes: Batman Be-Leaguered", 2014, "kids"],
+  ["Justice League: Throne of Atlantis", 2015, "orig"], ["Batman vs. Robin", 2015, "orig"], ["Justice League: Gods and Monsters", 2015, "orig"],
+  ["Batman Unlimited: Animal Instincts", 2015, "kids"], ["Batman Unlimited: Monster Mayhem", 2015, "kids"],
+  ["Lego DC Comics Super Heroes: Justice League vs. Bizarro League", 2015, "kids"], ["Lego DC Comics Super Heroes: Justice League – Attack of the Legion of Doom", 2015, "kids"],
+  ["Batman: Bad Blood", 2016, "orig"], ["Justice League vs. Teen Titans", 2016, "orig"], ["Batman: The Killing Joke", 2016, "orig"],
+  ["Batman: Return of the Caped Crusaders", 2016, "kids"], ["DC Super Hero Girls: Super Hero High", 2016, "kids"], ["DC Super Hero Girls: Hero of the Year", 2016, "kids"],
+  ["Batman Unlimited: Mechs vs. Mutants", 2016, "kids"], ["Lego DC Comics Super Heroes: Justice League – Cosmic Clash", 2016, "kids"],
+  ["Lego DC Comics Super Heroes: Justice League – Gotham City Breakout", 2016, "kids"],
+  ["Justice League Dark", 2017, "orig"], ["Teen Titans: The Judas Contract", 2017, "orig"], ["Batman and Harley Quinn", 2017, "orig"],
+  ["The Lego Batman Movie", 2017, "cinema"], ["DC Super Hero Girls: Intergalactic Games", 2017, "kids"], ["Batman vs. Two-Face", 2017, "kids"],
+  ["Lego DC Super Hero Girls: Brain Drain", 2017, "kids"],
+  ["Batman: Gotham by Gaslight", 2018, "orig"], ["Suicide Squad: Hell to Pay", 2018, "orig"], ["The Death of Superman", 2018, "orig"],
+  ["Teen Titans Go! To the Movies", 2018, "cinema"], ["Scooby-Doo! & Batman: The Brave and the Bold", 2018, "kids"], ["Batman Ninja", 2018, "other"],
+  ["DC Super Hero Girls: Legends of Atlantis", 2018, "kids"], ["Lego DC Comics Super Heroes: The Flash", 2018, "kids"],
+  ["Lego DC Super Hero Girls: Super-Villain High", 2018, "kids"], ["Lego DC Comics Super Heroes: Aquaman – Rage of Atlantis", 2018, "kids"],
+  ["Constantine: City of Demons", 2019, "orig"], ["Reign of the Supermen", 2019, "orig"], ["Justice League vs. the Fatal Five", 2019, "orig"],
+  ["Batman: Hush", 2019, "orig"], ["Wonder Woman: Bloodlines", 2019, "orig"], ["Batman vs. Teenage Mutant Ninja Turtles", 2019, "other"],
+  ["Teen Titans Go! vs. Teen Titans", 2019, "kids"], ["Lego DC: Batman – Family Matters", 2019, "kids"],
+  ["Superman: Red Son", 2020, "orig"], ["Justice League Dark: Apokolips War", 2020, "orig"], ["Deathstroke: Knights & Dragons", 2020, "orig"],
+  ["Superman: Man of Tomorrow", 2020, "orig"], ["Happy Halloween, Scooby-Doo!", 2020, "kids"], ["Lego DC: Shazam! Magic and Monsters", 2020, "kids"],
+  ["Batman: Soul of the Dragon", 2021, "orig"], ["Justice Society: World War II", 2021, "orig"], ["Batman: The Long Halloween, Part One", 2021, "orig"],
+  ["Batman: The Long Halloween, Part Two", 2021, "orig"], ["Injustice", 2021, "orig"],
+  ["Catwoman: Hunted", 2022, "orig"], ["Green Lantern: Beware My Power", 2022, "orig"], ["Batman and Superman: Battle of the Super Sons", 2022, "orig"],
+  ["DC League of Super-Pets", 2022, "cinema"], ["Teen Titans Go! & DC Super Hero Girls: Mayhem in the Multiverse", 2022, "kids"],
+  ["Legion of Super-Heroes", 2023, "orig"], ["Batman: The Doom That Came to Gotham", 2023, "orig"], ["Justice League: Warworld", 2023, "orig"],
+  ["Justice League x RWBY: Super Heroes & Huntsmen, Part One", 2023, "other"], ["Justice League x RWBY: Super Heroes & Huntsmen, Part Two", 2023, "other"],
+  ["Scooby-Doo! and Krypto, Too!", 2023, "kids"], ["Merry Little Batman", 2023, "kids"],
+  ["Justice League: Crisis on Infinite Earths – Part One", 2024, "orig"], ["Justice League: Crisis on Infinite Earths – Part Two", 2024, "orig"],
+  ["Justice League: Crisis on Infinite Earths – Part Three", 2024, "orig"], ["Watchmen Chapter I", 2024, "orig"], ["Watchmen Chapter II", 2024, "orig"],
+  ["Aztec Batman: Clash of Empires", 2025, "orig"], ["Batman Ninja vs. Yakuza League", 2025, "other"],
+  ["Batman: Knightfall – Part 1", 2026, "orig"],
+].map(([title, year, line]) => ({ title, year, line }));
+const ERAS = [["all", "All"], ["1990", "90s"], ["2000", "2000s"], ["2010", "2010s"], ["2020", "2020s"]];
+const STARTER_MOVIES = [
+  { title: "Paddington 2", year: 2017, runtime: 104, genre: "Family comedy" },
+  { title: "My Neighbor Totoro", year: 1988, runtime: 86, genre: "Animation" },
+  { title: "The Princess Bride", year: 1987, runtime: 98, genre: "Adventure" },
+  { title: "Spider-Man: Into the Spider-Verse", year: 2018, runtime: 117, genre: "Animation" },
+  { title: "Wallace & Gromit: The Curse of the Were-Rabbit", year: 2005, runtime: 85, genre: "Animation" },
+  { title: "Hook", year: 1991, runtime: 142, genre: "Adventure" },
+];
+const STARTER_ACTS = [
+  { name: "Picnic and kite flying", category: "parks", cost: "Free", notes: "Best on a breezy, dry day" },
+  { name: "Nature trail scavenger hunt", category: "parks", cost: "Free", notes: "Make a list of things to spot before you go" },
+  { name: "Adventure playground", category: "parks", cost: "Free" },
+  { name: "Trampoline park", category: "kids", cost: "Check prices", notes: "Usually needs booking and grip socks" },
+  { name: "Soft play", category: "kids", cost: "Check prices" },
+  { name: "Swimming at the leisure centre", category: "kids", cost: "Check prices" },
+  { name: "Board game afternoon", category: "together", cost: "Free" },
+  { name: "Bake something together", category: "together", cost: "Ingredients" },
+  { name: "Bike ride", category: "together", cost: "Free" },
+];
+
+const $ = (s, el = document) => el.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const todayISO = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
+const nextSaturday = () => { const d = new Date(); d.setDate(d.getDate() + ((6 - d.getDay() + 7) % 7)); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
+const nextFriday = () => { const d = new Date(); d.setDate(d.getDate() + ((5 - d.getDay() + 7) % 7)); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
+const fmtDate = (iso) => { if (!iso) return ""; const d = new Date(iso + "T12:00:00"); return d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" }); };
+
+const state = { crew: [], movies: [], acts: [], rotation: { turn: 0 }, loaded: { crew: false, movies: false, acts: false, rotation: false }, open: null, catFilter: "all", sort: "votes", readOnly: false, charts: null, svc: 0, era: "all", famOnly: false, dcLine: "all", dcHide: false, info: {}, aboutOpen: null, aboutBusy: {}, aboutErr: {}, canAsk: false };
+
+/* Storage: the shared artifact database when available, otherwise this browser only. */
+const store = (() => {
+  let db = null;
+  const local = { listeners: {}, data: {} };
+  const key = "popcorn-parks-v1";
+  try { local.data = JSON.parse(localStorage.getItem(key) || "{}"); } catch { local.data = {}; }
+  const saveLocal = () => { try { localStorage.setItem(key, JSON.stringify(local.data)); } catch {} };
+  const emit = (col) => (local.listeners[col] || []).forEach((fn) => fn(Object.entries(local.data[col] || {}).map(([id, v]) => ({ id, ...v }))));
+  const fail = (e) => {
+    if (e && e.code === "invalid_argument") { state.readOnly = true; render(); toast("You can view this planner but not change it."); }
+    else toast("That didn't save. Check your connection and try again.");
+    throw e;
+  };
+  return {
+    async init() {
+      try { db = window.claude ? await window.claude.use("db") : null; } catch { db = null; }
+      return !!db;
+    },
+    get shared() { return !!db; },
+    watch(col, fn, onErr) {
+      if (db) return db.collection(col).onSnapshot((snap) => fn(snap.docs.map((d) => ({ id: d.id, ...d.data() }))), onErr);
+      (local.listeners[col] ||= []).push(fn); setTimeout(() => emit(col), 0);
+    },
+    watchDoc(path, fn, onErr) {
+      if (db) return db.doc(path).onSnapshot((s) => fn(s.exists ? s.data() : null), onErr);
+      const [c, id] = path.split("/");
+      (local.listeners[c] ||= []).push((docs) => { const d = docs.find((x) => x.id === id); fn(d || null); });
+      setTimeout(() => emit(c), 0);
+    },
+    async add(col, data) {
+      if (db) return db.collection(col).add(data).catch(fail);
+      const id = Math.random().toString(36).slice(2, 10);
+      (local.data[col] ||= {})[id] = data; saveLocal(); emit(col);
+    },
+    async set(path, data) {
+      if (db) return db.doc(path).set(data).catch(fail);
+      const [c, id] = path.split("/"); (local.data[c] ||= {})[id] = data; saveLocal(); emit(c);
+    },
+    async update(path, data) {
+      if (db) return db.doc(path).update(data).catch(fail);
+      const [c, id] = path.split("/"); local.data[c] ||= {}; local.data[c][id] = { ...(local.data[c][id] || {}), ...data }; saveLocal(); emit(c);
+    },
+    async remove(path) {
+      if (db) return db.doc(path).delete().catch(fail);
+      const [c, id] = path.split("/"); if (local.data[c]) delete local.data[c][id]; saveLocal(); emit(c);
+    },
+  };
+})();
+
+let toastTimer;
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => (t.hidden = true), 2600); }
+
+const crewSorted = () => [...state.crew].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+const crewById = (id) => state.crew.find((c) => c.id === id);
+const picker = () => { const c = crewSorted(); return c.length ? c[((state.rotation.turn % c.length) + c.length) % c.length] : null; };
+const voteCount = (x) => Object.values(x.votes || {}).filter(Boolean).length;
+const initial = (name) => esc((name || "?").trim().charAt(0).toUpperCase());
+
+function avatar(c, size = 32) { return `<span class="avatar" style="background:${esc(c?.color || "#475569")};width:${size}px;height:${size}px;font-size:${size * 0.42}px">${initial(c?.name)}</span>`; }
+
+function votesHtml(kind, item) {
+  const crew = crewSorted();
+  if (!crew.length) return `<span class="muted" style="font-size:.85rem">Add your family to start voting.</span>`;
+  return crew.map((c) => {
+    const on = !!(item.votes || {})[c.id];
+    return `<button type="button" class="vote" aria-pressed="${on}" data-act="vote" data-kind="${kind}" data-id="${item.id}" data-who="${c.id}" ${state.readOnly ? "disabled" : ""} title="${on ? "Remove" : "Add"} ${esc(c.name)}'s vote"><span class="dot" style="background:${esc(c.color)}">${initial(c.name)}</span>${esc(c.name)}</button>`;
+  }).join("") + `<span class="count">${voteCount(item)} ${voteCount(item) === 1 ? "vote" : "votes"}</span>`;
+}
+
+function starsInput(kind, id) {
+  return `<span class="stars" role="group" aria-label="Rating">${[1, 2, 3, 4, 5].map((n) => `<button type="button" data-act="rate" data-kind="${kind}" data-id="${id}" data-n="${n}" aria-label="${n} star${n > 1 ? "s" : ""}">★</button>`).join("")}</span>`;
+}
+const starsRead = (n) => (n ? `<span class="stars readonly" aria-label="${n} of 5 stars">${"★".repeat(n)}<span class="muted">${"★".repeat(5 - n)}</span></span>` : "");
+
+/* ---------- Render ---------- */
+function renderTickets() {
+  const p = picker();
+  const next = state.movies.find((m) => m.status === "next");
+  const plans = state.acts.filter((a) => a.status === "planned").sort((a, b) => (a.plannedFor || "").localeCompare(b.plannedFor || ""));
+  const plan = plans[0];
+  $("#tickets").innerHTML = `
+    <div class="ticket turn">
+      <span class="label">Whose pick is it?</span>
+      ${p ? `<div class="row">${avatar(p, 34)}<span class="big">${esc(p.name)}</span></div><span class="muted" style="font-size:.85rem">${next ? "Their pick is booked in." : "They choose the next movie from the pile."}</span>`
+          : `<span class="big">Nobody yet</span><a href="#crew" class="muted">Add your family to start the rotation</a>`}
+    </div>
+    <div class="ticket">
+      <span class="label">Next movie night</span>
+      ${next ? `<span class="big">${esc(next.title)}</span><span class="mono muted">${esc(fmtDate(next.night)) || "Date to be set"}${next.runtime ? " · " + esc(next.runtime) + " min" : ""}</span>`
+             : `<span class="big muted">Not picked yet</span><span class="muted" style="font-size:.85rem">Choose “Make it next” on a movie.</span>`}
+    </div>
+    <div class="ticket">
+      <span class="label">Weekend plan</span>
+      ${plan ? `<span class="big">${esc(plan.name)}</span><span class="mono muted">${esc(fmtDate(plan.plannedFor))}${plans.length > 1 ? ` · +${plans.length - 1} more` : ""}</span>`
+             : `<span class="big muted">Nothing planned</span><span class="muted" style="font-size:.85rem">Pick a date on a weekend idea.</span>`}
+    </div>`;
+}
+
+function renderMovies() {
+  const sel = $("#m-by"), prev = sel.value;
+  sel.innerHTML = `<option value="">Someone</option>` + crewSorted().map((c) => `<option value="${c.id}">${esc(c.name)}</option>`).join("");
+  sel.value = prev || picker()?.id || "";
+  let list = state.movies.filter((m) => m.status !== "watched");
+  const sorts = {
+    votes: (a, b) => voteCount(b) - voteCount(a) || (b.createdAt || 0) - (a.createdAt || 0),
+    new: (a, b) => (b.createdAt || 0) - (a.createdAt || 0),
+    short: (a, b) => (Number(a.runtime) || 999) - (Number(b.runtime) || 999),
+  };
+  list.sort((a, b) => (b.status === "next") - (a.status === "next") || sorts[state.sort](a, b));
+  $("#spin").disabled = !list.some((m) => m.status === "pool") || state.readOnly;
+  const el = $("#movie-list");
+  if (!state.loaded.movies) { el.innerHTML = `<div class="empty"><p>Loading the movie pile…</p></div>`; return; }
+  if (!list.length) {
+    el.innerHTML = `<div class="empty"><h3>The pile is empty</h3><p>Suggest a movie above, or start with a few family favourites you can delete later.</p><button type="button" data-act="starter-movies" ${state.readOnly ? "disabled" : ""}>Add 6 family favourites</button></div>`;
+    return;
+  }
+  const p = picker();
+  el.innerHTML = list.map((m) => {
+    const by = crewById(m.suggestedBy);
+    const isNext = m.status === "next";
+    const open = state.open === "m:" + m.id;
+    return `<article class="card ${isNext ? "next" : ""}">
+      <div class="title"><h3>${esc(m.title)}</h3>${isNext ? `<span class="tag date">Next · ${esc(fmtDate(m.night)) || "date to be set"}</span>` : ""}</div>
+      <div class="meta">${m.year ? `<span class="mono">${esc(m.year)}</span>` : ""}${m.runtime ? `<span class="mono">${esc(m.runtime)} min</span>` : ""}${m.genre ? `<span>${esc(m.genre)}</span>` : ""}<span>Suggested by ${esc(by?.name || "someone")}</span>${isNext && m.pickedBy ? `<span>${esc(crewById(m.pickedBy)?.name || "Someone")}'s pick</span>` : ""}</div>
+      ${ratingBadges(infoFor(m.title)) ? `<div class="badges">${ratingBadges(infoFor(m.title))}</div>` : ""}
+      ${aboutPanel(m)}
+      <div class="votes">${votesHtml("movies", m)}</div>
+      ${open && !isNext ? `<div class="inline"><label class="f">Movie night date<input type="date" id="night-${m.id}" value="${nextFriday()}"></label><button class="primary small" type="button" data-act="make-next" data-id="${m.id}">Book it${p ? ` as ${esc(p.name)}'s pick` : ""}</button><button class="ghost small" type="button" data-act="close">Cancel</button></div>` : ""}
+      ${open && isNext ? `<div class="inline"><span class="label">How was it?</span>${starsInput("movies", m.id)}<button class="ghost small" type="button" data-act="close">Cancel</button></div>` : ""}
+      ${state.readOnly ? "" : `<div class="row">
+        ${isNext ? `<button class="primary small" type="button" data-act="open" data-key="m:${m.id}">We watched it</button><button class="small" type="button" data-act="unnext" data-id="${m.id}">Back to the pile</button>`
+                 : `<button class="small" type="button" data-act="open" data-key="m:${m.id}">Make it next</button>`}
+        ${aboutButton(m)}
+        <button class="ghost small danger" type="button" data-act="del" data-kind="movies" data-id="${m.id}">Remove</button>
+      </div>`}
+    </article>`;
+  }).join("");
+}
+
+function renderActs() {
+  const counts = { all: state.acts.filter((a) => a.status !== "done").length };
+  Object.keys(CATS).forEach((k) => (counts[k] = state.acts.filter((a) => a.category === k && a.status !== "done").length));
+  $("#cat-filter").innerHTML = [["all", "All"], ["parks", "Parks"], ["kids", "Kids (paid)"], ["together", "Together"]]
+    .map(([k, l]) => `<button type="button" class="chip small" data-act="cat" data-cat="${k}" aria-pressed="${state.catFilter === k}">${l} <span class="count">${counts[k]}</span></button>`).join("");
+  const el = $("#act-list");
+  if (!state.loaded.acts) { el.innerHTML = `<div class="empty"><p>Loading weekend ideas…</p></div>`; return; }
+  let list = state.acts.filter((a) => a.status !== "done" && (state.catFilter === "all" || a.category === state.catFilter));
+  list.sort((a, b) => (b.status === "planned") - (a.status === "planned") || (a.status === "planned" ? (a.plannedFor || "").localeCompare(b.plannedFor || "") : 0) || voteCount(b) - voteCount(a) || (b.createdAt || 0) - (a.createdAt || 0));
+  if (!list.length) {
+    el.innerHTML = state.acts.length
+      ? `<div class="empty"><p>No ideas in this category yet. Add one above.</p></div>`
+      : `<div class="empty"><h3>No weekend ideas yet</h3><p>Add places and plans above, or start with a handful of general ideas across all three categories.</p><button type="button" data-act="starter-acts" ${state.readOnly ? "disabled" : ""}>Add 9 starter ideas</button></div>`;
+    return;
+  }
+  el.innerHTML = list.map((a) => {
+    const planned = a.status === "planned";
+    const open = state.open === "a:" + a.id;
+    return `<article class="card ${planned ? "next" : ""}">
+      <div class="title"><h3>${esc(a.name)}</h3><span class="tag ${esc(a.category)}">${esc(CATS[a.category] || "Other")}</span>${planned ? `<span class="tag date">${esc(fmtDate(a.plannedFor))}</span>` : ""}</div>
+      ${a.cost || a.where ? `<div class="meta">${a.cost ? `<span><strong>Cost</strong> ${esc(a.cost)}</span>` : ""}${a.where ? `<span><strong>Where</strong> ${esc(a.where)}</span>` : ""}</div>` : ""}
+      ${a.notes ? `<p class="notes">${esc(a.notes)}</p>` : ""}
+      <div class="votes">${votesHtml("acts", a)}</div>
+      ${open && !planned ? `<div class="inline"><label class="f">Which day?<input type="date" id="plan-${a.id}" value="${nextSaturday()}"></label><button class="primary small" type="button" data-act="plan" data-kind="acts" data-id="${a.id}">Plan it</button><button class="ghost small" type="button" data-act="close">Cancel</button></div>` : ""}
+      ${open && planned ? `<div class="inline"><span class="label">How was it?</span>${starsInput("acts", a.id)}<button class="ghost small" type="button" data-act="close">Cancel</button></div>` : ""}
+      ${state.readOnly ? "" : `<div class="row">
+        ${planned ? `<button class="primary small" type="button" data-act="open" data-key="a:${a.id}">We did it</button><button class="small" type="button" data-act="unplan" data-id="${a.id}">Unplan</button>`
+                  : `<button class="small" type="button" data-act="open" data-key="a:${a.id}">Plan a day</button>`}
+        <button class="ghost small danger" type="button" data-act="del" data-kind="acts" data-id="${a.id}">Remove</button>
+      </div>`}
+    </article>`;
+  }).join("");
+}
+
+function renderCrew() {
+  const sw = $("#c-colors");
+  if (!sw.children.length) sw.innerHTML = COLORS.map((c, i) => `<input type="radio" name="c-color" id="c-color-${i}" value="${c}" ${i === state.crew.length % COLORS.length ? "checked" : ""}><label for="c-color-${i}" style="background:${c}" title="Colour ${i + 1}"></label>`).join("");
+  const el = $("#crew-list");
+  if (!state.loaded.crew) { el.innerHTML = `<div class="empty"><p>Loading…</p></div>`; return; }
+  const crew = crewSorted(), p = picker();
+  if (!crew.length) { el.innerHTML = `<div class="empty"><h3>No one here yet</h3><p>Add each person in the family. The first person added gets the first movie pick.</p></div>`; return; }
+  el.innerHTML = `<ol>${crew.map((c, i) => `<li>
+      <span class="mono muted">${i + 1}</span>${avatar(c)}<span class="name">${esc(c.name)}</span>
+      ${p && p.id === c.id ? `<span class="pill-turn">Picks next</span>` : ""}
+      ${state.readOnly ? "" : `<button class="ghost small" type="button" data-act="move" data-id="${c.id}" data-dir="-1" ${i === 0 ? "disabled" : ""} aria-label="Move ${esc(c.name)} up">↑</button>
+      <button class="ghost small" type="button" data-act="move" data-id="${c.id}" data-dir="1" ${i === crew.length - 1 ? "disabled" : ""} aria-label="Move ${esc(c.name)} down">↓</button>
+      <button class="ghost small danger" type="button" data-act="del-crew" data-id="${c.id}" aria-label="Remove ${esc(c.name)}">✕</button>`}
+    </li>`).join("")}</ol>
+    ${state.readOnly || crew.length < 2 ? "" : `<div class="row" style="margin-top:10px"><button class="small" type="button" data-act="skip">Skip ${esc(p.name)}'s turn</button></div>`}`;
+}
+
+function renderHistory() {
+  const rows = [
+    ...state.movies.filter((m) => m.status === "watched").map((m) => ({ date: m.watchedOn, kind: "Movie", what: m.title, who: crewById(m.pickedBy)?.name, rating: m.rating, id: m.id, col: "movies" })),
+    ...state.acts.filter((a) => a.status === "done").map((a) => ({ date: a.doneOn, kind: CATS[a.category] || "Activity", what: a.name, rating: a.rating, id: a.id, col: "acts" })),
+  ].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  const el = $("#history-list");
+  if (!rows.length) { el.innerHTML = `<div class="empty"><h3>Nothing here yet</h3><p>When you mark a movie as watched or a weekend plan as done, it lands here with your rating.</p></div>`; return; }
+  el.innerHTML = rows.map((r) => `<div class="hist">
+      <span class="mono muted">${esc(fmtDate(r.date))}</span>
+      <div class="what"><strong>${esc(r.what)}</strong><div class="muted" style="font-size:.82rem">${esc(r.kind)}${r.who ? ` · ${esc(r.who)}'s pick` : ""}</div></div>
+      <div class="row">${starsRead(r.rating)}${state.readOnly ? "" : `<button class="ghost small" type="button" data-act="undo" data-kind="${r.col}" data-id="${r.id}" title="Put it back">Undo</button>`}</div>
+    </div>`).join("");
+}
+
+const norm = (t) => String(t || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+const inPile = (title) => state.movies.find((m) => norm(m.title) === norm(title));
+const infoKey = (title) => (norm(title).slice(0, 150) || "untitled");
+const infoFor = (title) => state.info[infoKey(title)];
+function aboutButton(m) {
+  if (!state.canAsk && !infoFor(m.title)) return "";
+  const open = state.aboutOpen === infoKey(m.title);
+  return `<button class="ghost small" type="button" data-act="about" data-title="${esc(m.title)}" data-year="${esc(m.year || "")}" aria-expanded="${open}">${open ? "Hide" : "About"}</button>`;
+}
+function ratingBadges(i) {
+  if (!i || !i.known) return "";
+  return [i.nz ? `<span class="badge" title="New Zealand classification">NZ ${esc(i.nz)}</span>` : "", i.us ? `<span class="badge" title="US rating">US ${esc(i.us)}</span>` : "", i.imdb ? `<span class="badge score" title="IMDb user score, approximate">IMDb ${esc(Number(i.imdb).toFixed(1))}</span>` : ""].join("");
+}
+function aboutPanel(m) {
+  const k = infoKey(m.title);
+  if (state.aboutOpen !== k) return "";
+  const i = state.info[k];
+  if (state.aboutBusy[k]) return `<div class="about" aria-live="polite"><p class="muted">Looking up ${esc(m.title)}…</p></div>`;
+  if (state.aboutErr[k]) return `<div class="about" aria-live="polite"><p>${esc(state.aboutErr[k])}</p></div>`;
+  if (!i) return "";
+  if (!i.known) return `<div class="about"><p>Claude doesn't know enough about this one to describe it. It may be too new.</p></div>`;
+  return `<div class="about" aria-live="polite">
+    <div class="badges">${ratingBadges(i)}${i.year ? `<span class="mono muted">${esc(i.year)}</span>` : ""}${i.runtime ? `<span class="mono muted">${esc(i.runtime)} min</span>` : ""}${i.genre ? `<span class="muted">${esc(i.genre)}</span>` : ""}</div>
+    <p>${esc(i.synopsis)}</p>
+    ${i.family ? `<p class="muted"><strong>For the kids:</strong> ${esc(i.family)}</p>` : ""}
+    <p class="fine">Written by Claude from what it knows. Ratings and scores are approximate and may be out of date.</p>
+  </div>`;
+}
+function addButton(m) {
+  const found = inPile(m.title);
+  let add;
+  if (found) add = `<span class="in-pile">${found.status === "watched" ? "Watched" : "In the pile"}</span>`;
+  else if (state.readOnly) add = "";
+  else add = `<button class="small" type="button" data-act="add-chart" data-title="${esc(m.title)}" data-year="${esc(m.year || "")}" data-runtime="${esc(m.runtime || "")}">Add to pile</button>`;
+  return `<div class="row-btns">${aboutButton(m)}${add}</div>`;
+}
+let sampler = null;
+async function lookUp(title, year) {
+  const k = infoKey(title);
+  if (state.info[k] || state.aboutBusy[k] || !sampler) return;
+  state.aboutBusy[k] = true; delete state.aboutErr[k]; render();
+  const prompt = `A family in New Zealand is choosing a movie to watch together. Tell them about this film:
+Title: ${title}${year ? `\nYear: ${year}` : ""}
+
+Reply with only a JSON object, like:
+{"known": true, "year": 2017, "runtime": 104, "genre": "Family comedy", "synopsis": "Two or three spoiler-free sentences about the premise.", "nz": "PG", "us": "PG", "imdb": 7.8, "family": "One short line on whether it suits younger kids and why."}
+
+Fields: "nz" is the New Zealand classification (G, PG, M, R13, R15, R16 or R18) or null if you don't know it; "us" is the US MPAA rating or null; "imdb" is the IMDb user score out of 10 as best you know it, or null.
+If you are not confident you know this specific film (it may be very recent, obscure, or share a title with other films), reply {"known": false} and do not guess at the plot.`;
+  try {
+    const r = await sampler.json(prompt, { modelTier: "default" });
+    const clean = (v, n) => (typeof v === "string" ? v.slice(0, n) : null);
+    const data = r && r.known ? { known: true, title, year: num(r.year), runtime: num(r.runtime), genre: clean(r.genre, 60), synopsis: clean(r.synopsis, 900) || "", nz: clean(r.nz, 8), us: clean(r.us, 8), imdb: typeof r.imdb === "number" && r.imdb > 0 && r.imdb <= 10 ? r.imdb : null, family: clean(r.family, 300), at: now() } : { known: false, title, at: now() };
+    state.info[k] = data;
+    await store.set("info/" + k, data).catch(() => {});
+  } catch (e) {
+    const msg = { not_granted: "Looking up movies needs your OK to use Claude. Reload the page to be asked again.", rate_limited: "Too many look-ups at once. Wait a moment, then try again.", cancelled: "Stopped." }[e && e.code];
+    state.aboutErr[k] = msg || "Couldn't look that up just now. Try again in a moment.";
+  } finally {
+    delete state.aboutBusy[k]; render();
+  }
+}
+function renderDiscover() {
+  const charts = state.charts?.services || [];
+  const sEl = $("#streaming");
+  $("#svc-filter").innerHTML = charts.map((c, i) => `<button type="button" class="chip small" data-act="svc" data-i="${i}" aria-pressed="${state.svc === i}">${esc(c.name)}</button>`).join("");
+  const c = charts[state.svc] || charts[0];
+  if (!c) {
+    sEl.innerHTML = `<div class="empty"><p>${state.charts === null ? "Loading this week's charts…" : "No streaming charts yet. They appear here once added."}</p></div>`;
+  } else {
+    sEl.innerHTML = `<div class="chart">${(c.movies || []).map((m, i) => `<div class="chart-row"><span class="rank">${i + 1}</span><div class="what"><strong>${esc(m.title)}</strong>${m.year || m.views ? `<div class="sub mono">${[m.year, m.views ? m.views + " views" : ""].filter(Boolean).map(esc).join(" · ")}</div>` : ""}</div>${addButton(m)}${aboutPanel(m)}</div>`).join("")}</div>
+      <p class="source">${esc(c.period || "")}${c.region ? " · " + esc(c.region) : ""}${c.url ? ` · Source: <a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.source || "chart")}</a>` : ""}</p>`;
+  }
+  $("#era-filter").innerHTML = ERAS.map(([k, l]) => `<button type="button" class="chip small" data-act="era" data-era="${k}" aria-pressed="${state.era === k}">${l}</button>`).join("");
+  const fam = (m) => m.cert === "G" || m.cert === "PG";
+  const list = IMDB_TOP.filter((m) => (state.era === "all" || (m.year >= Number(state.era) && m.year < Number(state.era) + 10)) && (!state.famOnly || fam(m)))
+    .sort((a, b) => Math.floor(b.year / 10) - Math.floor(a.year / 10) || b.year - a.year);
+  $("#imdb").innerHTML = list.length ? `<div class="chart">${list.map((m) => `<div class="chart-row" style="grid-template-columns:1fr auto"><div class="what"><strong>${esc(m.title)}</strong><div class="sub"><span class="mono">${m.year} · ${m.runtime} min</span> <span class="cert ${fam(m) ? "fam" : ""}">${esc(m.cert)}</span></div></div>${addButton(m)}${aboutPanel(m)}</div>`).join("")}</div>`
+    : `<div class="empty"><p>No family-friendly picks in this decade. Try another one.</p></div>`;
+  const dcCount = (k) => DC_ANIMATED.filter((m) => k === "all" || m.line === k).length;
+  $("#dc-filter").innerHTML = [["all", "All"], ...Object.entries(DC_LINES)].map(([k, l]) => `<button type="button" class="chip small" data-act="dc-line" data-line="${k}" aria-pressed="${state.dcLine === k}">${esc(l)} <span class="count">${dcCount(k)}</span></button>`).join("");
+  const dc = DC_ANIMATED.filter((m) => (state.dcLine === "all" || m.line === state.dcLine) && !(state.dcHide && inPile(m.title)?.status === "watched"));
+  const seen = DC_ANIMATED.filter((m) => inPile(m.title)?.status === "watched").length;
+  $("#dc").innerHTML = `<p class="source">${seen} of ${DC_ANIMATED.length} watched</p>` + (dc.length ? `<div class="chart">${dc.map((m) => `<div class="chart-row" style="grid-template-columns:1fr auto"><div class="what"><strong>${esc(m.title)}</strong><div class="sub"><span class="mono">${m.year}</span> · ${esc(DC_LINES[m.line])}</div></div>${addButton(m)}${aboutPanel(m)}</div>`).join("")}</div>`
+    : `<div class="empty"><p>You've watched every one in this group.</p></div>`);
+}
+
+function render() { renderTickets(); renderMovies(); renderActs(); renderDiscover(); renderCrew(); renderHistory(); }
+
+/* ---------- Routing ---------- */
+function route() {
+  const tab = ["movies", "weekend", "discover", "crew", "history"].includes(location.hash.slice(1)) ? location.hash.slice(1) : "movies";
+  document.querySelectorAll("section.view").forEach((s) => (s.hidden = s.id !== "view-" + tab));
+  document.querySelectorAll("nav.tabs a").forEach((a) => (a.dataset.tab === tab ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current")));
+}
+window.addEventListener("hashchange", route);
+
+/* ---------- Actions ---------- */
+const now = () => Date.now();
+const num = (v) => { const n = parseInt(v, 10); return Number.isFinite(n) ? n : null; };
+
+$("#movie-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const title = $("#m-title").value.trim(); if (!title) return;
+  await store.add("movies", { title, year: num($("#m-year").value), runtime: num($("#m-runtime").value), genre: $("#m-genre").value.trim(), suggestedBy: $("#m-by").value || null, votes: {}, status: "pool", createdAt: now() });
+  ["#m-title", "#m-year", "#m-runtime", "#m-genre"].forEach((s) => ($(s).value = ""));
+  toast(`Added ${title}`); $("#m-title").focus();
+});
+$("#act-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const name = $("#a-name").value.trim(); if (!name) return;
+  const category = $("#a-cat").value;
+  await store.add("acts", { name, category, cost: $("#a-cost").value.trim(), where: $("#a-where").value.trim(), notes: $("#a-notes").value.trim(), votes: {}, status: "idea", createdAt: now() });
+  ["#a-name", "#a-cost", "#a-where", "#a-notes"].forEach((s) => ($(s).value = ""));
+  state.catFilter = state.catFilter === "all" ? "all" : category;
+  toast(`Added ${name}`); $("#a-name").focus();
+});
+$("#crew-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const name = $("#c-name").value.trim(); if (!name) return;
+  const color = (document.querySelector('input[name="c-color"]:checked') || {}).value || COLORS[0];
+  const order = Math.max(-1, ...state.crew.map((c) => c.order ?? 0)) + 1;
+  await store.add("crew", { name, color, order });
+  $("#c-name").value = "";
+  const nextSw = document.getElementById("c-color-" + ((state.crew.length + 1) % COLORS.length)); if (nextSw) nextSw.checked = true;
+  toast(`${name} joined the family`); $("#c-name").focus();
+});
+$("#dc-hide").addEventListener("change", (e) => { state.dcHide = e.target.checked; renderDiscover(); });
+$("#fam-only").addEventListener("change", (e) => { state.famOnly = e.target.checked; renderDiscover(); });
+$("#m-sort").addEventListener("change", (e) => { state.sort = e.target.value; renderMovies(); });
+$("#spin").addEventListener("click", () => {
+  const pool = state.movies.filter((m) => m.status === "pool");
+  if (!pool.length) return;
+  const weights = pool.map((m) => 1 + voteCount(m) * 2);
+  let r = Math.random() * weights.reduce((a, b) => a + b, 0), pick = pool[0];
+  for (let i = 0; i < pool.length; i++) { r -= weights[i]; if (r <= 0) { pick = pool[i]; break; } }
+  state.open = "m:" + pick.id; state.sort = "votes"; $("#m-sort").value = "votes";
+  renderMovies(); toast(`How about ${pick.title}?`);
+});
+
+document.addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-act]"); if (!b || b.disabled) return;
+  const { act, id, kind } = b.dataset;
+  const col = kind === "acts" ? "acts" : "movies";
+  const item = (col === "acts" ? state.acts : state.movies).find((x) => x.id === id);
+  switch (act) {
+    case "vote": {
+      const votes = { ...(item.votes || {}) }; if (votes[b.dataset.who]) delete votes[b.dataset.who]; else votes[b.dataset.who] = true;
+      item.votes = votes; render();
+      await store.update(`${col}/${id}`, { votes }); break;
+    }
+    case "open": state.open = b.dataset.key; render(); break;
+    case "close": state.open = null; render(); break;
+    case "make-next": {
+      const night = $("#night-" + id)?.value || "";
+      const current = state.movies.find((m) => m.status === "next");
+      if (current && current.id !== id) await store.update(`movies/${current.id}`, { status: "pool", night: null, pickedBy: null });
+      state.open = null;
+      await store.update(`movies/${id}`, { status: "next", night, pickedBy: picker()?.id || null });
+      toast(`${item.title} is booked for ${fmtDate(night) || "movie night"}`); break;
+    }
+    case "unnext": await store.update(`movies/${id}`, { status: "pool", night: null, pickedBy: null }); break;
+    case "rate": {
+      const rating = Number(b.dataset.n); state.open = null;
+      if (col === "movies") {
+        await store.update(`movies/${id}`, { status: "watched", watchedOn: item.night || todayISO(), rating });
+        await store.set("rotation/state", { turn: (state.rotation.turn || 0) + 1 });
+        toast(`Logged ${item.title}. ${picker() ? "Next pick passes on." : ""}`);
+      } else {
+        await store.update(`acts/${id}`, { status: "done", doneOn: item.plannedFor || todayISO(), rating });
+        toast(`Logged ${item.name}`);
+      }
+      break;
+    }
+    case "plan": {
+      const plannedFor = $("#plan-" + id)?.value || nextSaturday(); state.open = null;
+      await store.update(`acts/${id}`, { status: "planned", plannedFor });
+      toast(`${item.name} planned for ${fmtDate(plannedFor)}`); break;
+    }
+    case "unplan": await store.update(`acts/${id}`, { status: "idea", plannedFor: null }); break;
+    case "undo": {
+      if (col === "movies") await store.update(`movies/${id}`, { status: "pool", watchedOn: null, rating: null, night: null });
+      else await store.update(`acts/${id}`, { status: "idea", doneOn: null, rating: null, plannedFor: null });
+      break;
+    }
+    case "del": {
+      if (b.dataset.confirm !== "1") { b.dataset.confirm = "1"; b.textContent = "Tap again to remove"; setTimeout(() => { if (b.isConnected) { b.dataset.confirm = ""; b.textContent = "Remove"; } }, 3000); return; }
+      await store.remove(`${col}/${id}`); break;
+    }
+    case "svc": state.svc = Number(b.dataset.i); renderDiscover(); break;
+    case "disc":
+      document.querySelectorAll("#disc-switch [data-act=disc]").forEach((x) => x.setAttribute("aria-pressed", x === b));
+      document.querySelectorAll(".disc").forEach((x) => (x.hidden = x.dataset.d !== b.dataset.d)); break;
+    case "about": {
+      const k = infoKey(b.dataset.title);
+      state.aboutOpen = state.aboutOpen === k ? null : k; render();
+      if (state.aboutOpen === k) lookUp(b.dataset.title, b.dataset.year);
+      break;
+    }
+    case "dc-line": state.dcLine = b.dataset.line; renderDiscover(); break;
+    case "era": state.era = b.dataset.era; renderDiscover(); break;
+    case "add-chart": {
+      const title = b.dataset.title; if (inPile(title)) return;
+      await store.add("movies", { title, year: num(b.dataset.year), runtime: num(b.dataset.runtime), genre: "", suggestedBy: null, votes: {}, status: "pool", createdAt: now() });
+      toast(`Added ${title} to the pile`); break;
+    }
+    case "cat": state.catFilter = b.dataset.cat; renderActs(); break;
+    case "starter-movies": for (const m of STARTER_MOVIES) await store.add("movies", { ...m, suggestedBy: null, votes: {}, status: "pool", createdAt: now() }); toast("Added 6 movies"); break;
+    case "starter-acts": for (const a of STARTER_ACTS) await store.add("acts", { cost: "", where: "", notes: "", ...a, votes: {}, status: "idea", createdAt: now() }); toast("Added 9 ideas"); break;
+    case "move": {
+      const crew = crewSorted(); const i = crew.findIndex((c) => c.id === id); const j = i + Number(b.dataset.dir);
+      if (j < 0 || j >= crew.length) return;
+      const keepPicker = picker()?.id;
+      [crew[i], crew[j]] = [crew[j], crew[i]];
+      for (let k = 0; k < crew.length; k++) if (crew[k].order !== k) { crew[k].order = k; await store.update(`crew/${crew[k].id}`, { order: k }); }
+      const t = crew.findIndex((c) => c.id === keepPicker); if (t >= 0) await store.set("rotation/state", { turn: t });
+      break;
+    }
+    case "del-crew": {
+      if (b.dataset.confirm !== "1") { b.dataset.confirm = "1"; b.textContent = "Remove?"; setTimeout(() => { if (b.isConnected) { b.dataset.confirm = ""; b.textContent = "✕"; } }, 3000); return; }
+      const crew = crewSorted(); const p = picker(); const idx = crew.findIndex((c) => c.id === id);
+      await store.remove(`crew/${id}`);
+      const remaining = crew.filter((c) => c.id !== id);
+      if (remaining.length) { let t = remaining.findIndex((c) => c.id === p?.id); if (t < 0) t = idx % remaining.length; await store.set("rotation/state", { turn: t }); }
+      break;
+    }
+    case "skip": await store.set("rotation/state", { turn: (state.rotation.turn || 0) + 1 }); toast(`Skipped. ${picker()?.name || "Next person"} picks now.`); break;
+  }
+});
+
+/* ---------- Boot ---------- */
+(async function boot() {
+  route(); render();
+  const shared = await store.init();
+  try { sampler = window.claude ? await window.claude.use("sample") : null; } catch { sampler = null; }
+  state.canAsk = !!sampler;
+  const timer = setTimeout(() => { if (!Object.values(state.loaded).every(Boolean)) $("#status").textContent = "Still connecting to your saved plans…"; }, 10000);
+  const done = (k) => () => { state.loaded[k] = true; if (Object.values(state.loaded).every(Boolean)) { clearTimeout(timer); $("#status").textContent = shared ? "Saved for everyone who opens this page" : "Saved in this browser only"; } };
+  const onErr = (e) => { clearTimeout(timer); $("#status").textContent = "Couldn't load saved plans. Reload to try again."; };
+  const mark = { crew: done("crew"), movies: done("movies"), acts: done("acts"), rotation: done("rotation") };
+  store.watch("crew", (d) => { state.crew = d; mark.crew(); render(); }, onErr);
+  store.watch("movies", (d) => { state.movies = d; mark.movies(); render(); }, onErr);
+  store.watch("acts", (d) => { state.acts = d; mark.acts(); render(); }, onErr);
+  store.watch("info", (d) => { d.forEach((x) => { const { id, ...v } = x; state.info[id] = v; }); render(); }, () => {});
+  store.watchDoc("charts/streaming", (d) => { state.charts = d || {}; renderDiscover(); }, () => { state.charts = {}; renderDiscover(); });
+  store.watchDoc("rotation/state", (d) => { state.rotation = d || { turn: 0 }; mark.rotation(); render(); }, onErr);
+})();
+</script>
+</body></html>
