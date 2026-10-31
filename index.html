@@ -62,6 +62,10 @@ header.top { display: flex; align-items: center; justify-content: space-between;
 .logo { width: 42px; height: 42px; border-radius: 12px; background: var(--accent); color: var(--accent-fg); display: grid; place-items: center; flex: none; box-shadow: 0 6px 18px -6px var(--accent); }
 .logo svg { width: 24px; height: 24px; }
 .brand p { margin: 0; font-size: 0.85rem; color: var(--muted); }
+.top-right { display: inline-flex; align-items: center; gap: 10px; }
+.theme-btn { width: 38px; height: 38px; min-height: 0; padding: 0; border-radius: 50%; display: grid; place-items: center; background: var(--surface); border: 1px solid var(--line); color: var(--muted); }
+.theme-btn svg { width: 18px; height: 18px; }
+.theme-btn:hover { color: var(--accent-ink); }
 .status { font-size: 0.75rem; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
 .status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--parks); box-shadow: 0 0 0 3px color-mix(in srgb, var(--parks) 25%, transparent); }
 @media (max-width: 520px) { .status span { display: none; } }
@@ -313,7 +317,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
       <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1.5 12a1 1 0 0 1-1 .9h-9a1 1 0 0 1-1-.9z"/><path d="M9 8 8.5 21M15 8l.5 13"/><path d="M6.5 8a2.5 2.5 0 0 1 3-3.5 2.5 2.5 0 0 1 5 0 2.5 2.5 0 0 1 3 3.5"/></svg></span>
       <div><h1>Popcorn &amp; Parks</h1><p>Movie nights and weekends, sorted.</p></div>
     </div>
-    <span class="status" id="status-wrap"><span id="status">Loading…</span></span>
+    <div class="top-right"><span class="status" id="status-wrap"><span id="status">Loading…</span></span><button type="button" class="theme-btn" id="theme-btn" aria-label="Switch to light mode" title="Light or dark"></button></div>
   </header>
 
   <div class="tickets" id="tickets"></div>
@@ -924,10 +928,10 @@ function renderDiscover() {
 const GENRES = { 28: "Action", 12: "Adventure", 16: "Animation", 35: "Comedy", 80: "Crime", 99: "Documentary", 18: "Drama", 10751: "Family", 14: "Fantasy", 36: "History", 27: "Horror", 10402: "Music", 9648: "Mystery", 10749: "Romance", 878: "Sci-fi", 53: "Thriller", 10752: "War", 37: "Western" };
 // Moods are friendlier shortcuts: a film fits if it has any "any" genre and none of the "not" genres.
 const MOODS = [
-  { id: "feelgood", label: "Feel-good", any: [35, 10751, 16, 10749, 10402], not: [27, 53, 80, 10752] },
+  { id: "feelgood", label: "Feel-good", any: [35, 10751, 16, 10749, 10402], not: [27, 53, 80, 10752], gentle: true },
   { id: "laugh", label: "Make us laugh", any: [35], not: [27] },
   { id: "edge", label: "Edge of your seat", any: [53, 28, 9648], not: [10751] },
-  { id: "cosy", label: "Cosy", any: [10751, 16, 14, 10749], not: [27, 53, 10752, 80] },
+  { id: "cosy", label: "Cosy", any: [10751, 16, 14, 10749], not: [27, 53, 10752, 80], gentle: true },
   { id: "mind", label: "Mind-bending", any: [878, 9648], not: [10751] },
   { id: "epic", label: "Big adventure", any: [12, 14], not: [27] },
   { id: "spooky", label: "Spooky", any: [27, 9648], not: [10751] },
@@ -950,6 +954,8 @@ const watchedKeys = () => new Set(state.movies.filter((m) => m.status === "watch
 // Grown-ups: NZ M or higher when there's an NZ rating, otherwise US PG-13 or higher (usually M or above here).
 const NZ_MPLUS = new Set(["M", "R13", "R15", "R16", "R18", "R"]);
 const US_MPLUS = new Set(["PG-13", "R", "NC-17"]);
+// Gentle moods skip R-rated films (NZ R13 and up, or US R / NC-17).
+const isRestricted = (d) => (d.nz ? /^R/.test(d.nz) : d.c === "R" || d.c === "NC-17");
 const mPlus = (d) => (d.nz ? NZ_MPLUS.has(d.nz) : US_MPLUS.has(d.c));
 const AUDS = [["any", "Anyone"], ["kids", "Kids (G & PG)"], ["adult", "Grown-ups (M and above)"]];
 const fitsAud = (d) => (tonight.aud === "kids" ? kidSafe(d) : tonight.aud === "adult" ? mPlus(d) : true);
@@ -979,7 +985,7 @@ function tonightPicks() {
     const g = d.g || [];
     const gHit = gSel.filter((x) => g.includes(x));
     if (gSel.length && !gHit.length) continue;
-    const mHit = moods.filter((m) => m.any.some((x) => g.includes(x)) && !m.not.some((x) => g.includes(x)));
+    const mHit = moods.filter((m) => m.any.some((x) => g.includes(x)) && !m.not.some((x) => g.includes(x)) && !(m.gentle && isRestricted(d)));
     if (moods.length && !mHit.length) continue;
     const pile = state.movies.find((m) => norm(m.title) === k);
     const votesFromWho = pile ? who.filter((id) => (pile.votes || {})[id]).length : 0;
@@ -1247,6 +1253,17 @@ document.addEventListener("click", async (e) => {
     case "skip": await store.set("rotation/state", { turn: (state.rotation.turn || 0) + 1 }); toast(`Skipped. ${picker()?.name || "Next person"} picks now.`); break;
   }
 });
+
+/* ---------- Theme: dark by default, light if chosen; saved on this device ---------- */
+const THEME_KEY = "popcorn-parks-theme";
+const SUN = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>`;
+const MOON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>`;
+function applyTheme(t) {
+  document.documentElement.dataset.theme = t;
+  const b = $("#theme-btn"); b.innerHTML = t === "dark" ? SUN : MOON; b.setAttribute("aria-label", t === "dark" ? "Switch to light mode" : "Switch to dark mode");
+}
+applyTheme((() => { try { return localStorage.getItem(THEME_KEY) || "dark"; } catch { return "dark"; } })());
+$("#theme-btn").addEventListener("click", () => { const t = document.documentElement.dataset.theme === "dark" ? "light" : "dark"; applyTheme(t); try { localStorage.setItem(THEME_KEY, t); } catch {} });
 
 /* ---------- Boot ---------- */
 (async function boot() {
