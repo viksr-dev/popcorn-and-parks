@@ -7,9 +7,8 @@ downloaded into posters/ and published alongside index.html. This script:
 1. Collects titles from the built-in lists in index.html (IMDB_TOP,
    DC_ANIMATED, STARTER_MOVIES) plus tools/extra-titles.json (the movie
    pile and chart titles from the shared database) and any --title args.
-2. Finds each title on TMDB. With TMDB_API_KEY set (a v3 key or a v4 read
-   access token) it uses api.themoviedb.org; otherwise it reads the public
-   search page on www.themoviedb.org.
+2. Finds each title with the TMDB API (api.themoviedb.org). Set
+   TMDB_API_KEY to a free TMDB v3 API key or v4 read access token.
 3. Downloads the w185 poster from image.tmdb.org into posters/<slug>.jpg.
 4. Rewrites the POSTERS map in index.html (between the POSTERS markers).
 
@@ -18,7 +17,6 @@ Existing files are kept, so re-running only fetches new titles.
 Usage: python3 tools/fetch_posters.py [--title "Name" [--year 2024]] [--force]
 """
 import argparse
-import html
 import json
 import os
 import re
@@ -96,26 +94,6 @@ def search_api(title, year, key):
     return (exact or results)[0]["poster_path"]
 
 
-def search_web(title, year):
-    q = f"{title} y:{year}" if year else title
-    body = get("https://www.themoviedb.org/search/movie?" + urllib.parse.urlencode({"query": q})).decode("utf-8", "replace")
-    # Each result card links to /movie/<id> with a poster <img> and a title <h2>.
-    cards = re.findall(r'<div class="card v4 tight".*?</div>\s*</div>\s*</div>', body, re.S) or [body]
-    best = None
-    for c in cards:
-        p = re.search(r'/t/p/w\d+(?:_and_h\d+_[a-z]+)?(/[A-Za-z0-9]+\.jpg)', c)
-        if not p:
-            continue
-        h = re.search(r"<h2[^>]*>(.*?)</h2>", c, re.S)
-        name = html.unescape(re.sub(r"<[^>]+>", "", h.group(1))).strip() if h else ""
-        if norm(name) == norm(title):
-            return p.group(1)
-        best = best or p.group(1)
-    if not best and year:
-        return search_web(title, None)
-    return best
-
-
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--title", action="append", default=[])
@@ -135,6 +113,8 @@ def main():
     titles += [(t, args.year) for t in args.title]
 
     key = os.environ.get("TMDB_API_KEY", "").strip()
+    if not key:
+        sys.exit("Set TMDB_API_KEY (free from https://www.themoviedb.org/settings/api)")
     OUT.mkdir(exist_ok=True)
     seen, missing = set(), []
     for title, year in titles:
@@ -145,7 +125,7 @@ def main():
         if k in posters and (OUT / posters[k]).exists() and not args.force:
             continue
         try:
-            path = search_api(title, year, key) if key else search_web(title, year)
+            path = search_api(title, year, key)
             if not path:
                 missing.append(title)
                 print(f"  no poster: {title}")
