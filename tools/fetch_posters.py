@@ -78,7 +78,8 @@ def get(url, headers=None, tries=3):
     raise RuntimeError(f"failed: {url}")
 
 
-def search_api(title, year, key):
+def search_movie(title, year, key):
+    """Best TMDB search result with a poster, or None."""
     headers, params = {}, {"query": title, "include_adult": "false"}
     if len(key) > 40:
         headers["Authorization"] = f"Bearer {key}"
@@ -89,11 +90,16 @@ def search_api(title, year, key):
     data = json.loads(get("https://api.themoviedb.org/3/search/movie?" + urllib.parse.urlencode(params), headers))
     results = [r for r in data.get("results", []) if r.get("poster_path")]
     if not results and year:
-        return search_api(title, None, key)
+        return search_movie(title, None, key)
     if not results:
         return None
     exact = [r for r in results if norm(r.get("title", "")) == norm(title) or norm(r.get("original_title", "")) == norm(title)]
-    return (exact or results)[0]["poster_path"]
+    return (exact or results)[0]
+
+
+def search_api(title, year, key):
+    r = search_movie(title, year, key)
+    return r["poster_path"] if r else None
 
 
 def main():
