@@ -147,7 +147,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
 .tag.date { color: var(--accent-ink); }
 
 /* Poster tiles: a generated "poster" per title, so lists feel like a shelf of films */
-.poster { --h: 220; position: relative; width: 62px; aspect-ratio: 2 / 3; max-width: 100%; border-radius: 9px; overflow: hidden; flex: none; display: flex; align-items: flex-end; padding: 6px; color: #fff; font-family: var(--display); font-weight: 800; font-size: 0.62rem; line-height: 1.05; letter-spacing: -0.01em; text-transform: uppercase; background: linear-gradient(160deg, hsl(var(--h) 70% 58%), hsl(calc(var(--h) + 40) 65% 30%) 70%, hsl(calc(var(--h) + 60) 60% 16%)); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.12), 0 6px 14px -8px rgb(0 0 0 / 0.6); overflow-wrap: break-word; word-break: normal; hyphens: auto; text-shadow: 0 1px 2px rgb(0 0 0 / 0.35); }
+.poster { --h: 220; position: relative; width: 78px; aspect-ratio: 2 / 3; max-width: 100%; border-radius: 9px; overflow: hidden; flex: none; display: flex; align-items: flex-end; padding: 6px; color: #fff; font-family: var(--display); font-weight: 800; font-size: 0.62rem; line-height: 1.05; letter-spacing: -0.01em; text-transform: uppercase; background: linear-gradient(160deg, hsl(var(--h) 70% 58%), hsl(calc(var(--h) + 40) 65% 30%) 70%, hsl(calc(var(--h) + 60) 60% 16%)); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.12), 0 6px 14px -8px rgb(0 0 0 / 0.6); overflow-wrap: break-word; word-break: normal; hyphens: auto; text-shadow: 0 1px 2px rgb(0 0 0 / 0.35); }
 .poster::before { content: ""; position: absolute; inset: 0; background: radial-gradient(80% 50% at 80% 10%, rgb(255 255 255 / 0.28), transparent 60%); }
 .poster span { position: relative; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
 .poster.sm { width: 40px; border-radius: 6px; font-size: 0; padding: 0; }
@@ -230,6 +230,59 @@ button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
 .pill-link:hover { border-color: var(--accent); }
 .map-link { color: var(--accent-ink); font-weight: 600; text-decoration: none; margin-left: 4px; }
 .map-link:hover { text-decoration: underline; }
+/* Discover > Tonight: poster wall */
+.pgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 18px 14px; }
+@media (max-width: 520px) { .pgrid { grid-template-columns: repeat(3, 1fr); gap: 14px 10px; } }
+.prow { display: grid; grid-auto-flow: column; grid-auto-columns: 140px; gap: 12px; overflow-x: auto; scroll-snap-type: x proximity; padding-bottom: 6px; margin-inline: -16px; padding-inline: 16px; scrollbar-width: none; }
+.prow::-webkit-scrollbar { display: none; }
+@media (max-width: 520px) { .prow { grid-auto-columns: 112px; } }
+@media (min-width: 720px) { .prow { margin-inline: 0; padding-inline: 0; } }
+.ptile { display: grid; gap: 6px; align-content: start; min-width: 0; scroll-snap-align: start; }
+.ptile .art { position: relative; }
+.ptile .poster { width: 100%; border-radius: 12px; font-size: 0.85rem; padding: 10px; box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.1), 0 14px 26px -16px rgb(0 0 0 / 0.75); transition: transform .18s ease, box-shadow .18s ease; }
+@media (hover: hover) { .ptile:hover .poster { transform: translateY(-3px); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.14), 0 20px 32px -16px rgb(0 0 0 / 0.8); } }
+.ptile .flag { position: absolute; z-index: 3; left: 6px; top: 6px; font-size: 0.68rem; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: rgb(10 14 28 / 0.78); color: #fff; backdrop-filter: blur(4px); }
+.ptile .flag.ok::before { content: "✓ "; color: #6fd08c; }
+.ptile .nope { position: absolute; z-index: 3; right: 6px; top: 6px; width: 26px; height: 26px; min-height: 0; padding: 0; border-radius: 50%; border: none; background: rgb(10 14 28 / 0.7); color: #fff; font-size: 0.8rem; line-height: 1; display: grid; place-items: center; backdrop-filter: blur(4px); opacity: 0.85; }
+.ptile .nope:hover { opacity: 1; background: var(--danger); }
+.ptile .score { position: absolute; z-index: 3; left: 6px; bottom: 6px; font-family: var(--mono); font-size: 0.68rem; padding: 1px 6px; border-radius: 6px; background: rgb(10 14 28 / 0.78); color: #ffd36b; }
+.ptile .tt { font-weight: 700; font-size: 0.9rem; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ptile .sub { color: var(--muted); font-size: 0.74rem; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.ptile .why { font-size: 0.72rem; line-height: 1.3; }
+.ptile .acts { display: flex; gap: 4px; flex-wrap: wrap; }
+.ptile .acts button { flex: 1; min-width: 0; padding-inline: 8px; }
+.ptile .in-pile { justify-content: center; flex: 1; }
+.pgrid > .about { grid-column: 1 / -1; }
+.refresh-row { display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; padding-top: 6px; }
+.refresh-row svg { width: 16px; height: 16px; }
+/* Phone: filter rows scroll sideways instead of wrapping, so results show sooner */
+@media (max-width: 719px) {
+  .tonight .chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: -16px; padding-inline: 16px; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 24px), transparent); mask-image: linear-gradient(90deg, transparent 0, #000 16px, #000 calc(100% - 24px), transparent); }
+  .tonight .chips::-webkit-scrollbar { display: none; }
+  .tonight .chips > * { flex: none; }
+}
+.filters { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; display: grid; gap: 12px; box-shadow: var(--shadow); }
+@media (max-width: 719px) { .filters { padding: 12px 16px; overflow: hidden; } }
+/* Next movie night ticket shows its poster in the stub */
+.ticket .stub-poster { position: absolute; right: 12px; top: 12px; width: 42px; z-index: 1; }
+.ticket.with-poster .ico { display: none; }
+/* Surprise reveal */
+.reveal { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 24px; background: radial-gradient(60% 50% at 50% 40%, rgb(245 183 64 / 0.28), transparent 70%), rgb(6 8 18 / 0.86); backdrop-filter: blur(6px); }
+.reveal .box { display: grid; gap: 12px; justify-items: center; text-align: center; max-width: 340px; color: #fff; }
+.reveal .poster { width: min(230px, 58vw); border-radius: 16px; font-size: 1.1rem; padding: 14px; box-shadow: 0 0 0 1px rgb(255 255 255 / 0.15), 0 30px 80px -20px rgb(245 183 64 / 0.55); }
+.reveal h2 { font-size: 1.5rem; color: #fff; }
+.reveal .label { color: #ffd36b; }
+.reveal .why, .reveal .sub { color: rgb(255 255 255 / 0.75); font-size: 0.85rem; }
+.reveal .row { justify-content: center; }
+.reveal .x { position: absolute; top: max(16px, env(safe-area-inset-top)); right: 16px; background: rgb(255 255 255 / 0.1); color: #fff; border: none; width: 40px; height: 40px; border-radius: 50%; padding: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .reveal { animation: rv-fade .25s ease-out both; }
+  .reveal .poster { animation: rv-spin .9s cubic-bezier(.2,.8,.2,1.15) both; }
+  .reveal .box > :not(.poster) { animation: rv-up .5s .55s ease-out both; }
+  @keyframes rv-fade { from { opacity: 0; } }
+  @keyframes rv-spin { from { transform: perspective(800px) rotateY(540deg) scale(.4); opacity: 0; } }
+  @keyframes rv-up { from { transform: translateY(10px); opacity: 0; } }
+}
 /* Discover > Tonight */
 .tonight { display: grid; gap: 14px; }
 .tonight .grp { display: grid; gap: 6px; }
@@ -242,7 +295,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
 .source a { color: inherit; }
 .in-pile { font-size: 0.78rem; color: var(--muted); white-space: nowrap; display: inline-flex; gap: 4px; align-items: center; }
 .in-pile::before { content: "✓"; color: var(--parks); font-weight: 700; }
-@media (max-width: 420px) { .chart { padding-inline: 10px; } .chart-row { gap: 10px; } .chart-row .poster.sm { display: none; } .chart-row { grid-template-columns: 1.4em 1fr auto; } .chart-row.norank { grid-template-columns: 1fr auto; } }
+@media (max-width: 420px) { .chart { padding-inline: 10px; } .chart-row { gap: 10px; } .chart-row .poster.sm { width: 34px; } .chart-row { grid-template-columns: 1.4em auto 1fr auto; } .chart-row.norank { grid-template-columns: auto 1fr auto; } .poster { width: 68px; } }
 
 .toast { position: fixed; left: 50%; bottom: calc(86px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 10px 18px; border-radius: 999px; font-weight: 600; font-size: 0.9rem; z-index: 20; max-width: calc(100% - 32px); box-shadow: 0 10px 30px -10px rgb(0 0 0 / 0.5); }
 @media (min-width: 720px) { .toast { bottom: calc(24px + env(safe-area-inset-bottom, 0px)); } }
@@ -376,12 +429,14 @@ button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
     </div>
     <div class="disc tonight" data-d="tonight">
       <div class="row between"><h3>What do you feel like tonight?</h3><button type="button" class="small" data-act="t-surprise">Surprise us</button></div>
+      <div class="filters">
       <div class="grp"><span class="label">Mood</span><div class="chips" id="t-moods" role="group" aria-label="Mood"></div></div>
       <div class="grp"><span class="label">Genres</span><div class="chips" id="t-genres" role="group" aria-label="Genres"></div></div>
       <div class="grp"><span class="label">How long have you got?</span><div class="chips" id="t-time" role="group" aria-label="Running time"></div></div>
       <div class="grp" id="t-who-grp"><span class="label">Who's watching?</span><div class="chips" id="t-who" role="group" aria-label="Who's watching"></div></div>
       <div class="grp"><span class="label">Who's it for?</span><div class="chips" id="t-aud" role="group" aria-label="Age rating"></div></div>
       <div class="opts"><button type="button" class="ghost small" data-act="t-clear">Clear choices</button></div>
+      </div>
       <div id="t-results"></div>
       <div id="t-liked"></div>
       <p class="source">Genres, running times, US ratings and related films from <a href="https://www.themoviedb.org/" target="_blank" rel="noopener">TMDB</a>.</p>
@@ -645,7 +700,7 @@ function renderTickets() {
       ${p ? `<div class="row">${avatar(p, 34)}<span class="big">${esc(p.name)}</span></div><span class="muted" style="font-size:.85rem">${next ? "Their pick is booked in." : "They choose the next movie."}</span>`
           : `<span class="big">Nobody yet</span><a href="#crew" class="muted">Add your family to start the rotation</a>`}
     </div>
-    <div class="ticket">${ICONS.movie}
+    <div class="ticket ${next && POSTERS[norm(next.title)] ? "with-poster" : ""}">${ICONS.movie}${next && POSTERS[norm(next.title)] ? `<span class="stub-poster">${poster(next.title, "sm")}</span>` : ""}
       <span class="label">Next movie night</span>
       ${next ? `<span class="big">${esc(next.title)}</span><span class="mono muted">${esc(fmtDate(next.night)) || "Date to be set"}${next.runtime ? " · " + esc(next.runtime) + " min" : ""}</span>`
              : `<span class="big muted">Not picked yet</span><span class="muted" style="font-size:.85rem">Choose “Make it next” on a movie.</span>`}
@@ -885,6 +940,8 @@ const tonight = (() => {
 })();
 const saveTonight = () => { try { localStorage.setItem(T_PREFS, JSON.stringify({ ...tonight, more: 0 })); } catch {} };
 const dataFor = (title) => MOVIE_DATA[norm(title)];
+// Films set aside with "Show me different ones" or ✕, for this visit only.
+const skipped = new Set();
 const KID_CERTS = new Set(["G", "PG"]);
 // Kids mode: US G/PG, or NZ G/PG, or unrated but listed as a family film.
 const kidSafe = (d) => KID_CERTS.has(d.c) || KID_CERTS.has(d.nz) || ((!d.c || d.c === "NR") && (d.g || []).includes(10751));
@@ -896,7 +953,7 @@ const US_MPLUS = new Set(["PG-13", "R", "NC-17"]);
 const mPlus = (d) => (d.nz ? NZ_MPLUS.has(d.nz) : US_MPLUS.has(d.c));
 const AUDS = [["any", "Anyone"], ["kids", "Kids (G & PG)"], ["adult", "Grown-ups (M and above)"]];
 const fitsAud = (d) => (tonight.aud === "kids" ? kidSafe(d) : tonight.aud === "adult" ? mPlus(d) : true);
-const passes = (d, watched) => !watched.has(norm(d.t)) && fitsAud(d) && fitsTime(d);
+const passes = (d, watched) => !watched.has(norm(d.t)) && !skipped.has(norm(d.t)) && fitsAud(d) && fitsTime(d);
 
 // How much each watcher likes each genre, from the films they voted for (and how those were rated once watched).
 function tasteFor(ids) {
@@ -957,12 +1014,21 @@ function becauseLiked() {
     return { m, rel: rel.slice(0, 6) };
   }).filter((x) => x.rel.length);
 }
-function pickRow(d, why) {
+function pickTile(d, why) {
   const m = { title: d.t, year: d.y, runtime: d.r };
+  const k = norm(d.t), found = inPile(d.t);
   const cert = d.nz ? "NZ " + d.nz : d.c && d.c !== "NR" ? d.c : "";
-  const sub = [d.y, d.r ? d.r + " min" : ""].filter(Boolean).join(" · ");
-  return `<div class="chart-row norank">${poster(d.t, "sm")}<div class="what"><strong>${esc(d.t)}</strong><div class="sub"><span class="mono">${esc(sub)}</span>${cert ? ` <span class="cert ${kidSafe(d) ? "fam" : ""}">${esc(cert)}</span>` : ""} ${esc((d.g || []).slice(0, 3).map((x) => GENRES[x]).filter(Boolean).join(" · "))}</div>${why && why.length ? `<div class="why">${esc(why.join(" · "))}</div>` : ""}</div>${addButton(m)}${aboutPanel(m)}</div>`;
+  const add = found ? `<span class="in-pile">${found.status === "watched" ? "Watched" : "In the pile"}</span>`
+    : state.readOnly ? "" : `<button class="small" type="button" data-act="add-chart" data-title="${esc(d.t)}" data-year="${esc(d.y || "")}" data-runtime="${esc(d.r || "")}">Add to pile</button>`;
+  return `<div class="ptile">
+    <div class="art">${poster(d.t)}${found && found.status !== "watched" ? `<span class="flag ok">In the pile</span>` : ""}${d.v ? `<span class="score" title="TMDB score">★ ${esc(d.v.toFixed(1))}</span>` : ""}<button type="button" class="nope" data-act="t-nope" data-k="${esc(k)}" aria-label="Not for us: hide ${esc(d.t)}" title="Not for us">✕</button></div>
+    <div class="tt">${esc(d.t)}</div>
+    <div class="sub"><span class="mono">${esc([d.y, d.r ? d.r + "m" : ""].filter(Boolean).join(" · "))}</span>${cert ? `<span class="cert ${kidSafe(d) ? "fam" : ""}">${esc(cert)}</span>` : ""}</div>
+    ${why && why.length ? `<div class="why">${esc(why.join(" · "))}</div>` : `<div class="sub">${esc((d.g || []).slice(0, 2).map((x) => GENRES[x]).filter(Boolean).join(" · "))}</div>`}
+    <div class="acts">${add}${aboutButton(m)}</div>
+  </div>${aboutPanel(m)}`;
 }
+const ICON_REFRESH = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5M3 21v-5h5"/></svg>`;
 function renderTonight() {
   const counts = {};
   for (const d of Object.values(MOVIE_DATA)) for (const g of d.g || []) counts[g] = (counts[g] || 0) + 1;
@@ -977,19 +1043,37 @@ function renderTonight() {
 
   const picks = tonightPicks();
   const show = 12 + tonight.more * 12;
+  state.tonightShown = picks.slice(0, show).map((p) => p.k);
   const chosen = tonight.genres.length || tonight.moods.length || tonight.time !== "any" || tonight.aud !== "any" || tonight.who.length;
   $("#t-results").innerHTML = picks.length
     ? `<p class="source">${picks.length} ${picks.length === 1 ? "film fits" : "films fit"}${chosen ? "" : ". Pick a mood or a few genres to narrow it down"}${tonight.who.length ? ", best matches for who's watching first" : ""}.</p>
-       <div class="chart">${picks.slice(0, show).map((p) => pickRow(p.d, p.why)).join("")}</div>
-       ${picks.length > show ? `<div class="tonight-foot"><button type="button" class="small" data-act="t-more">Show more</button></div>` : ""}`
+       <div class="pgrid">${picks.slice(0, show).map((p) => pickTile(p.d, p.why)).join("")}</div>
+       <div class="refresh-row">${picks.length > show ? `<button type="button" class="primary small" data-act="t-refresh">${ICON_REFRESH}Show me different ones</button><button type="button" class="ghost small" data-act="t-more">Show more</button>` : ""}${skipped.size ? `<button type="button" class="ghost small" data-act="t-unskip">Bring back ${skipped.size} hidden</button>` : ""}</div>`
+    : skipped.size ? `<div class="empty"><p>You've been through every film that fits.</p><button type="button" data-act="t-unskip">Start again</button></div>`
     : `<div class="empty"><p>Nothing fits all of that. Try fewer genres, a longer running time${tonight.aud !== "any" ? " or a different age group" : ""}.</p></div>`;
 
   const liked = becauseLiked();
   $("#t-liked").innerHTML = liked.length
-    ? liked.map(({ m, rel }) => `<div class="grp"><div class="liked-head"><h3>Because you liked ${esc(m.title)}</h3>${starsRead(m.rating)}</div><div class="chart">${rel.map((d) => pickRow(d)).join("")}</div></div>`).join("")
+    ? liked.map(({ m, rel }) => `<div class="grp"><div class="liked-head"><h3>Because you liked ${esc(m.title)}</h3>${starsRead(m.rating)}</div><div class="prow">${rel.map((d) => pickTile(d)).join("")}</div></div>`).join("")
     : `<p class="source">Rate a film 4 or 5 stars after you watch it, and similar films will show up here.</p>`;
 }
-document.addEventListener("click", (e) => {
+function showReveal(p) {
+  $("#reveal")?.remove();
+  const d = p.d, found = inPile(d.t);
+  const el = document.createElement("div");
+  el.id = "reveal"; el.className = "reveal"; el.setAttribute("role", "dialog"); el.setAttribute("aria-label", "Tonight's pick");
+  el.innerHTML = `<button type="button" class="x" data-act="t-reveal-close" aria-label="Close">✕</button><div class="box">
+    ${poster(d.t)}<span class="label">Tonight you're watching</span><h2>${esc(d.t)}</h2>
+    <div class="sub mono">${esc([d.y, d.r ? d.r + " min" : "", d.nz ? "NZ " + d.nz : d.c, d.v ? "★ " + d.v.toFixed(1) : ""].filter(Boolean).join(" · "))}</div>
+    ${p.why && p.why.length ? `<div class="why">${esc(p.why.join(" · "))}</div>` : ""}
+    <div class="row">${found || state.readOnly ? "" : `<button type="button" class="primary" data-act="t-reveal-add" data-k="${esc(p.k)}">Add to pile</button>`}<button type="button" data-act="t-reveal-again" data-k="${esc(p.k)}">${ICON_REFRESH.replace("<svg", '<svg width="16" height="16"')} Spin again</button></div>
+  </div>`;
+  el.addEventListener("click", (e) => { if (e.target === el) el.remove(); });
+  document.body.appendChild(el);
+  el.querySelector("[data-act=t-reveal-add], [data-act=t-reveal-again]")?.focus();
+}
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("#reveal")?.remove(); });
+document.addEventListener("click", async (e) => {
   const b = e.target.closest("[data-act^='t-']"); if (!b) return;
   const tog = (arr, v) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
   switch (b.dataset.act) {
@@ -1000,11 +1084,21 @@ document.addEventListener("click", (e) => {
     case "t-who": tonight.who = tog(tonight.who, b.dataset.who); break;
     case "t-clear": Object.assign(tonight, { genres: [], moods: [], time: "any", who: [] }); break;
     case "t-more": tonight.more++; renderTonight(); return;
+    case "t-refresh": (state.tonightShown || []).forEach((k) => skipped.add(k)); renderTonight(); $("#t-results").scrollIntoView({ behavior: "smooth", block: "start" }); return;
+    case "t-nope": skipped.add(b.dataset.k); renderTonight(); return;
+    case "t-unskip": skipped.clear(); renderTonight(); return;
     case "t-surprise": {
       const picks = tonightPicks().slice(0, 15);
       if (!picks.length) { toast("Nothing fits those choices yet."); return; }
       const p = picks[Math.floor(Math.random() * picks.length)];
-      toast(`How about ${p.d.t}?`); return;
+      showReveal(p); return;
+    }
+    case "t-reveal-close": $("#reveal")?.remove(); return;
+    case "t-reveal-again": $("#reveal")?.remove(); skipped.add(b.dataset.k); document.querySelector("[data-act=t-surprise]").click(); return;
+    case "t-reveal-add": {
+      const d = MOVIE_DATA[b.dataset.k]; $("#reveal")?.remove();
+      if (d && !inPile(d.t) && !state.readOnly) { await store.add("movies", { title: d.t, year: d.y || null, runtime: d.r || null, genre: (d.g || []).slice(0, 2).map((x) => GENRES[x]).join(" "), suggestedBy: null, votes: {}, status: "pool", createdAt: now() }); toast(`Added ${d.t} to the pile`); }
+      return;
     }
   }
   tonight.more = 0; saveTonight(); renderTonight();
