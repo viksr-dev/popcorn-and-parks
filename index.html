@@ -327,6 +327,19 @@ button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
 .mopts input { width: auto; }
 @media (max-width: 520px) { .mrow { grid-template-columns: auto 1fr auto; row-gap: 4px; } .mrow .when { grid-column: 1 / -1; min-width: 0; } }
 .mrow .row-btns button { white-space: nowrap; }
+/* Which service this month? */
+.svc-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; display: grid; gap: 10px; box-shadow: var(--shadow); }
+.svc-card .head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.svc-rows { display: grid; gap: 8px; }
+.svc-row { display: grid; grid-template-columns: minmax(90px, auto) 1fr auto; gap: 10px; align-items: center; }
+.svc-row b { font-size: 0.9rem; }
+.svc-row .bar { height: 8px; border-radius: 99px; background: var(--sunk); overflow: hidden; }
+.svc-row .bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--accent), var(--coral)); }
+.svc-row.best b::after { content: " ★"; color: var(--accent-ink); }
+.svc-row .n { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); white-space: nowrap; }
+.svc-card details { font-size: 0.82rem; color: var(--muted); }
+.svc-card summary { cursor: pointer; }
+.svc-card ul { margin: 6px 0 0; padding-left: 18px; }
 /* Discover > Tonight */
 .tonight { display: grid; gap: 14px; }
 .tonight .grp { display: grid; gap: 6px; }
@@ -391,6 +404,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
         <div class="row"><button class="primary" type="submit">Add to the pile</button></div>
       </form>
     </details>
+    <div id="svc-month"></div>
     <div class="list" id="movie-list"></div>
   </section>
 
@@ -1279,7 +1293,36 @@ document.addEventListener("click", async (e) => {
   renderMarathon();
 });
 
-function render() { renderTickets(); renderMovies(); renderActs(); renderDiscover(); renderTonight(); renderMarathon(); renderCrew(); renderHistory(); }
+/* ---------- Which service this month? ---------- */
+// Streaming info for any film we know: the catalogue plus every marathon film.
+const WATCH_INFO = (() => { const m = {}; for (const [k, d] of Object.entries(MOVIE_DATA)) m[k] = d; for (const s of MARATHONS) for (const f of s.f) m[norm(f.t)] ||= f; return m; })();
+function renderServiceMonth() {
+  const el = $("#svc-month"); if (!el) return;
+  const pile = state.movies.filter((m) => m.status !== "watched");
+  if (!pile.length) { el.innerHTML = ""; return; }
+  const by = {}, none = [], unknown = [];
+  for (const m of pile) {
+    const d = WATCH_INFO[norm(m.title)];
+    if (!d) { unknown.push(m.title); continue; }
+    const s = streams(d);
+    if (!s.length) { none.push(m.title); continue; }
+    const w = 1 + voteCount(m) * 0.5 + (m.status === "next" ? 1 : 0);
+    for (const x of s) (by[x] ||= { n: 0, w: 0, films: [] }), by[x].n++, by[x].w += w, by[x].films.push(m.title);
+  }
+  const ranked = Object.entries(by).sort((a, b) => b[1].w - a[1].w || b[1].n - a[1].n).slice(0, 5);
+  const max = ranked[0]?.[1].n || 1;
+  const best = ranked[0];
+  el.innerHTML = `<div class="svc-card">
+    <div class="head"><h3>Which service this month?</h3><span class="source">From the ${pile.length} unwatched ${pile.length === 1 ? "film" : "films"} in your pile</span></div>
+    ${ranked.length ? `<p style="margin:0">${best ? `<strong>${esc(best[0])}</strong> streams ${best[1].n} of them${best[1].films.length ? ` (${esc(best[1].films.slice(0, 3).join(", "))}${best[1].films.length > 3 ? "…" : ""})` : ""}.` : ""}</p>
+      <div class="svc-rows">${ranked.map(([x, v], i) => `<div class="svc-row ${i === 0 ? "best" : ""}"><b>${esc(x)}</b><span class="bar"><i style="width:${Math.round((v.n / max) * 100)}%"></i></span><span class="n">${v.n} ${v.n === 1 ? "film" : "films"}</span></div>`).join("")}</div>
+      <details><summary>Which films are on each</summary>${ranked.map(([x, v]) => `<p style="margin:6px 0 0"><strong>${esc(x)}:</strong> ${esc(v.films.join(", "))}</p>`).join("")}</details>`
+      : `<p class="muted" style="margin:0">None of the films in your pile are streaming in NZ right now.</p>`}
+    ${none.length || unknown.length ? `<p class="source">${none.length ? `Rent or buy only: ${esc(none.join(", "))}. ` : ""}${unknown.length ? `No streaming info for ${esc(unknown.join(", "))}.` : ""} Films with more votes count for more. Checked ${esc(fmtDate(WATCH_ASOF) || "recently")}.</p>` : `<p class="source">Films with more votes count for more. Checked ${esc(fmtDate(WATCH_ASOF) || "recently")}.</p>`}
+  </div>`;
+}
+
+function render() { renderTickets(); renderServiceMonth(); renderMovies(); renderActs(); renderDiscover(); renderTonight(); renderMarathon(); renderCrew(); renderHistory(); }
 
 /* ---------- Routing ---------- */
 function route() {
