@@ -140,13 +140,13 @@ def steam():
     sheet(uniq_items, STEAM_CACHE, STEAM_OUT / "sheet-{}.jpg", (231, 87), 5, 20, lambda it: f"{it['id']}.jpg")
     for v in allit.values():
         for it in v[1:]:
-            if "sp" in v[0]:
-                it["sp"] = v[0]["sp"]
+            if "spr" in v[0]:
+                it["spr"] = v[0]["spr"]
     return out
 
 
 def sheet(items, cache, pattern, size, cols, rows, name):
-    """Paste each item's image into numbered sheets; sets item["sp"] = [sheet, index]."""
+    """Paste each item's image into numbered sheets; sets item["spr"] = [sheet, index, rows]."""
     from PIL import Image
     per = cols * rows
     for old in pattern.parent.glob(pattern.name.replace("{}", "*")):
@@ -164,7 +164,7 @@ def sheet(items, cache, pattern, size, cols, rows, name):
                 im = im.resize((max(tw, round(sw * scale)), max(th, round(sh * scale))))
                 l, t = (im.width - tw) // 2, (im.height - th) // 2
                 img.paste(im.crop((l, t, l + tw, t + th)), ((i % cols) * tw, (i // cols) * th))
-                it["sp"] = [n // per, i, r]
+                it["spr"] = [n // per, i, r]
             except Exception as ex:
                 print(f"  sheet error: {name(it)}: {ex}")
         img.save(str(pattern).format(n // per), quality=72, optimize=True)
