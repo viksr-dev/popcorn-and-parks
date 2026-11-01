@@ -432,6 +432,42 @@ a.small.ghost { background: transparent; }
   .ptile .acts button, .ptile .acts a { min-height: 36px; }
   .ptile .nope { width: 30px; height: 30px; }
 }
+/* Family extras */
+.banner { background: color-mix(in srgb, var(--accent) 20%, var(--surface)); border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent); border-radius: 12px; padding: 10px 14px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.cal-links { display: inline-flex; gap: 4px; flex-wrap: wrap; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; display: grid; gap: 10px; box-shadow: var(--shadow); }
+.panel h3 { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.sub-row { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 0.9rem; }
+.sub-row:last-child { border-bottom: none; }
+.sub-row .hint { font-size: 0.75rem; color: var(--muted); }
+.sub-row .hint.keep { color: var(--parks); } .sub-row .hint.pause { color: var(--coral); }
+.totals { display: flex; gap: 16px; flex-wrap: wrap; font-family: var(--display); }
+.totals b { font-size: 1.3rem; }
+.badge-shelf { display: grid; gap: 10px; }
+.person-badges { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; }
+.person-badges .bdg { display: flex; gap: 4px; flex-wrap: wrap; }
+.person-badges .bdg span { font-size: 0.72rem; padding: 2px 8px; border-radius: 99px; background: color-mix(in srgb, var(--accent) 18%, transparent); }
+.person-badges .pts { font-family: var(--display); font-weight: 800; color: var(--accent-ink); white-space: nowrap; }
+.quiz-opt { width: 100%; text-align: left; justify-content: flex-start; background: rgb(255 255 255 / 0.08); color: #fff; border: 1px solid rgb(255 255 255 / 0.15); border-radius: 12px; padding: 12px 14px; font-size: 1rem; }
+.quiz-opt.right { background: #1f6b3d; border-color: #2fae66; }
+.quiz-opt.wrong { background: #6b1f2a; border-color: #c2414f; }
+.quiz-q { font-size: 1.15rem; font-weight: 700; }
+.lv-tally { display: grid; gap: 6px; width: 100%; }
+.lv-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; text-align: left; }
+.lv-row .bar { height: 8px; border-radius: 99px; background: rgb(255 255 255 / 0.12); overflow: hidden; grid-column: 1 / -1; }
+.lv-row .bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--coral)); }
+.lv-who { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; font-size: 0.8rem; opacity: 0.85; }
+.shop label { display: flex; gap: 8px; align-items: center; }
+.bg-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+.bg { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; display: grid; gap: 6px; }
+.bg .top { display: flex; gap: 10px; align-items: center; }
+.bg .emoji { font-size: 1.5rem; }
+.hol-day { display: grid; grid-template-columns: 7.5em 1fr auto; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.hol-day:last-child { border-bottom: none; }
+.hol-day .d { font-family: var(--mono); font-size: 0.78rem; color: var(--accent-ink); }
+.hol-day .alt { font-size: 0.75rem; color: var(--muted); }
+@media (max-width: 520px) { .hol-day { grid-template-columns: 1fr auto; } .hol-day .d { grid-column: 1 / -1; } .sub-row { grid-template-columns: 1fr auto; } }
+.steps { margin: 0; padding-left: 20px; font-size: 0.9rem; display: grid; gap: 4px; }
 /* Discover > Tonight */
 .tonight { display: grid; gap: 14px; }
 .tonight .grp { display: grid; gap: 6px; }
@@ -466,6 +502,7 @@ a.small.ghost { background: transparent; }
   </header>
 
   <div class="ro-banner" id="ro-banner" hidden>👀 You can see this planner but can't vote or change things yet. Ask whoever shared it to give you access to <strong>use</strong> it, not just view it.</div>
+  <div class="banner" id="live-banner" hidden></div>
   <div class="tickets" id="tickets"></div>
 
   <nav class="tabs" aria-label="Sections">
@@ -507,6 +544,7 @@ a.small.ghost { background: transparent; }
       <div><h2>Weekend ideas</h2><p>Parks, paid outings for the kids, and things to do together.</p></div>
     </div>
     <div class="explore" id="explore"></div>
+    <details class="panel" id="holiday-panel"><summary><strong>🏖️ School holiday planner</strong> <span class="muted" style="font-size:.85rem">a day-by-day plan with rainy-day backups</span></summary><div id="holiday"></div></details>
     <div class="nearby">
       <span class="label">Find nearby in Google Maps</span>
       <div class="chips">
@@ -567,6 +605,16 @@ a.small.ghost { background: transparent; }
       </form>
     </details>
     <div id="crew-list"></div>
+    <div id="badges"></div>
+    <div id="subs"></div>
+    <details class="panel" id="homescreen"><summary><strong>📱 Put the app on your home screen</strong></summary>
+      <p style="margin:0" class="muted">Open this page in your phone's browser, then:</p>
+      <strong>iPhone (Safari)</strong>
+      <ol class="steps"><li>Tap the Share button (the square with an arrow).</li><li>Scroll down and tap <strong>Add to Home Screen</strong>.</li><li>Tap <strong>Add</strong>. Popcorn &amp; Parks now has its own icon.</li></ol>
+      <strong>Android (Chrome)</strong>
+      <ol class="steps"><li>Tap the ⋮ menu at the top right.</li><li>Tap <strong>Add to Home screen</strong> (or <strong>Install</strong>).</li><li>Tap <strong>Add</strong>.</li></ol>
+      <p class="source">You'll need to be signed in to claude.ai in that browser the first time.</p>
+    </details>
   </section>
 
   <section class="view" id="view-discover" hidden>
@@ -582,7 +630,7 @@ a.small.ghost { background: transparent; }
       <button type="button" data-act="disc" data-d="dc" aria-pressed="false">DC animated</button>
     </div>
     <div class="disc tonight" data-d="tonight">
-      <div class="row between"><h3>What do you feel like tonight?</h3><div class="row"><button type="button" class="small" data-act="kp-open">Kids' picks 👍👎</button><button type="button" class="small" data-act="t-surprise">Surprise us</button></div></div>
+      <div class="row between"><h3>What do you feel like tonight?</h3><div class="row"><button type="button" class="small" data-act="lv-start" data-kind="movie">🗳️ Live vote</button><button type="button" class="small" data-act="kp-open">Kids' picks 👍👎</button><button type="button" class="small" data-act="t-surprise">Surprise us</button></div></div>
       <div class="filters">
       <div class="grp"><span class="label">Mood</span><div class="chips" id="t-moods" role="group" aria-label="Mood"></div></div>
       <div class="grp"><span class="label">Genres</span><div class="chips" id="t-genres" role="group" aria-label="Genres"></div></div>
@@ -638,6 +686,7 @@ a.small.ghost { background: transparent; }
       <button type="button" data-act="g-tab" data-t="play" aria-pressed="true">Play tonight</button>
       <button type="button" data-act="g-tab" data-t="lib" aria-pressed="false">Our games</button>
       <button type="button" data-act="g-tab" data-t="deals" aria-pressed="false">Deals &amp; new</button>
+      <button type="button" data-act="g-tab" data-t="board" aria-pressed="false">Board games</button>
     </div>
     <div id="games-view" class="tonight"></div>
   </section>
@@ -929,7 +978,7 @@ function renderMovies() {
       ${open && !isNext ? `<div class="inline"><label class="f">Movie night date<input type="date" id="night-${m.id}" value="${nextFriday()}"></label><button class="primary small" type="button" data-act="make-next" data-id="${m.id}">Book it${p ? ` as ${esc(p.name)}'s pick` : ""}</button><button class="ghost small" type="button" data-act="close">Cancel</button></div>` : ""}
       ${open && isNext ? `<div class="inline"><span class="label">How was it?</span>${starsInput("movies", m.id)}<button class="ghost small" type="button" data-act="close">Cancel</button></div>` : ""}
       ${state.readOnly ? "" : `<div class="row">
-        ${isNext ? `<button class="primary small" type="button" data-act="open" data-key="m:${m.id}">We watched it</button><button class="small" type="button" data-act="unnext" data-id="${m.id}">Back to the pile</button>`
+        ${isNext ? `<button class="primary small" type="button" data-act="open" data-key="m:${m.id}">We watched it</button><button class="small" type="button" data-act="unnext" data-id="${m.id}">Back to the pile</button>${calLinks(m.title + " (movie night)", m.night, mn.time, Number(m.runtime) || WATCH_INFO[norm(m.title)]?.r || 120, "Movie night: " + m.title)}`
                  : `<button class="small" type="button" data-act="open" data-key="m:${m.id}">Make it next</button>`}
         ${aboutButton(m)}
         <button class="ghost small danger" type="button" data-act="del" data-kind="movies" data-id="${m.id}">Remove</button>
@@ -970,7 +1019,7 @@ function renderActs() {
       ${open && !planned ? `<div class="inline"><label class="f">Which day?<input type="date" id="plan-${a.id}" value="${nextSaturday()}"></label><button class="primary small" type="button" data-act="plan" data-kind="acts" data-id="${a.id}">Plan it</button><button class="ghost small" type="button" data-act="close">Cancel</button></div>` : ""}
       ${open && planned ? `<div class="inline"><span class="label">How was it?</span>${starsInput("acts", a.id)}<button class="ghost small" type="button" data-act="close">Cancel</button></div>` : ""}
       ${state.readOnly ? "" : `<div class="row">
-        ${planned ? `<button class="primary small" type="button" data-act="open" data-key="a:${a.id}">We did it</button><button class="small" type="button" data-act="unplan" data-id="${a.id}">Unplan</button>`
+        ${planned ? `<button class="primary small" type="button" data-act="open" data-key="a:${a.id}">We did it</button><button class="small" type="button" data-act="unplan" data-id="${a.id}">Unplan</button>${calLinks(a.name, a.plannedFor, null, null, [a.where, a.notes].filter(Boolean).join(" · "))}`
                   : `<button class="small" type="button" data-act="open" data-key="a:${a.id}">Plan a day</button>`}
         <button class="ghost small danger" type="button" data-act="del" data-kind="acts" data-id="${a.id}">Remove</button>
       </div>`}
@@ -1007,7 +1056,7 @@ function renderHistory() {
   el.innerHTML = `<div class="timeline">` + rows.map((r) => `<div class="hist">
       ${r.col === "movies" ? poster(r.what, "sm", true) : catTile(catOf(r))}
       <div class="what"><strong>${esc(r.what)}</strong><div class="muted" style="font-size:.8rem"><span class="hist-when">${esc(fmtDate(r.date))}</span> · ${esc(r.kind)}${r.who ? ` · ${esc(r.who)}'s pick` : ""}</div></div>
-      <div class="row">${starsRead(r.rating)}${state.readOnly ? "" : `<button class="ghost small" type="button" data-act="undo" data-kind="${r.col}" data-id="${r.id}" title="Put it back">Undo</button>`}</div>
+      <div class="row">${starsRead(r.rating)}${r.col === "movies" && sampler ? `<button class="ghost small" type="button" data-act="qz-open" data-title="${esc(r.what)}">🧠 Quiz</button>` : ""}${state.readOnly ? "" : `<button class="ghost small" type="button" data-act="undo" data-kind="${r.col}" data-id="${r.id}" title="Put it back">Undo</button>`}</div>
     </div>`).join("") + `</div>`;
 }
 
@@ -1595,6 +1644,7 @@ function renderMovieNight() {
     <label class="f" style="color:#fff">Starts at <input type="time" id="mn-time" value="${esc(mn.time)}" style="width:auto"></label>
     <div class="sub mono" style="color:rgb(255 255 255 / .75)">${esc([next.runtime || d.r ? (next.runtime || d.r) + " min" : "", d.nz ? "NZ " + d.nz : d.c || "", (next.runtime || d.r) ? "finishes about " + clock(new Date(when.getTime() + (next.runtime || d.r) * 60000)) : ""].filter(Boolean).join(" · "))}</div>
     ${d.t ? whereLine(d, true) : ""}
+    ${themeBlock(next)}
     <div class="snacks"><span class="label">Get ready</span>${SNACKS.map((x, i) => `<label class="${mn.done[i] ? "done" : ""}"><input type="checkbox" data-act="mn-snack" data-i="${i}" ${mn.done[i] ? "checked" : ""}><span>${x}</span></label>`).join("")}</div>
   </div>`;
   $("#mn-time").onchange = (e) => { mn.time = e.target.value || "19:00"; saveMn(); renderMovieNight(); };
@@ -1717,6 +1767,7 @@ function findGame(title) {
 function gameCatalog() {
   const m = new Map(GAMES.map((g) => [norm(g.t), { ...g, own: [], ps: false, docs: [] }]));
   for (const doc of state.games) {
+    if (doc.platform === "board") continue;
     const base = findGame(doc.title), key = base ? norm(base.t) : norm(doc.title);
     let e = m.get(key);
     if (!e) { const i = doc.info || {}; e = { t: doc.title, g: i.g || [], lc: i.lc, lm: i.lm, ss: i.ss, oc: i.oc, sp: i.sp, r: i.r, d: i.d, y: i.y, own: [], ps: false, docs: [], custom: true }; m.set(key, e); }
@@ -1797,10 +1848,11 @@ function renderGames() { queueMicrotask(fixMoreLabels);
   document.querySelectorAll("[data-act=g-tab]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.t === gs.tab));
   if (gs.tab === "lib") return renderGameLib(el);
   if (gs.tab === "deals") return renderGameDeals(el);
+  if (gs.tab === "board") return renderGameBoard(el);
   const genres = {}; GAMES.forEach((g) => (g.g || []).forEach((x) => (genres[x] = (genres[x] || 0) + 1)));
   const picks = gamePicks(), show = 12 + gs.more * 12;
   state.gShown = picks.slice(0, show).map((p) => norm(p.g.t));
-  el.innerHTML = `<div class="row between"><h3>What do we feel like playing?</h3><button type="button" class="small" data-act="g-surprise">Surprise us</button></div>
+  el.innerHTML = `<div class="row between"><h3>What do we feel like playing?</h3><div class="row"><button type="button" class="small" data-act="lv-start" data-kind="game">🗳️ Live vote</button><button type="button" class="small" data-act="g-surprise">Surprise us</button></div></div>
     <div class="filters ${openPanels.has("games") ? "open" : ""}" data-panel="games">
       <div class="grp"><span class="label">How are we playing?</span><div class="chips">${G_MODES.map(([k, l]) => `<button type="button" class="chip small" data-act="g-mode" data-k="${k}" aria-pressed="${gs.mode === k}">${l}</button>`).join("")}</div></div>
       <div class="grp"><span class="label">How many players?</span><div class="chips">${[[0, "Any"], [1, "1"], [2, "2"], [3, "3"], [4, "4+"]].map(([k, l]) => `<button type="button" class="chip small" data-act="g-players" data-k="${k}" aria-pressed="${gs.players === k}">${l}</button>`).join("")}</div></div>
@@ -1953,10 +2005,331 @@ document.addEventListener("click", async (e) => {
   gs.more = 0; saveGs(); renderGames();
 });
 
-function render() { const rb = $("#ro-banner"); if (rb) rb.hidden = !state.readOnly; renderGames(); renderTickets(); renderServiceMonth(); renderMovies(); renderExplore(); renderStats(); if ($("#movienight")) renderMovieNight(); if ($("#kidpicks")) renderKids(); renderActs(); renderDiscover(); renderTonight(); renderMarathon(); renderCrew(); renderHistory(); }
+/* ---------- Calendar links (Google and Outlook; no account needed in the app) ---------- */
+function calLinks(title, dateISO, time, mins, details) {
+  if (!dateISO) return "";
+  const pad = (n) => String(n).padStart(2, "0");
+  const fmt = (d) => `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
+  let g, o;
+  if (time) {
+    const s = new Date(`${dateISO}T${time}`), e = new Date(s.getTime() + (mins || 120) * 60000);
+    g = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${fmt(s)}/${fmt(e)}&details=${encodeURIComponent(details || "")}`;
+    o = `https://outlook.live.com/calendar/0/deeplink/compose?subject=${encodeURIComponent(title)}&startdt=${encodeURIComponent(s.toISOString())}&enddt=${encodeURIComponent(e.toISOString())}&body=${encodeURIComponent(details || "")}`;
+  } else {
+    const d = dateISO.replace(/-/g, ""), n = new Date(dateISO + "T12:00:00"); n.setDate(n.getDate() + 1);
+    g = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${d}/${n.getFullYear()}${pad(n.getMonth() + 1)}${pad(n.getDate())}&details=${encodeURIComponent(details || "")}`;
+    o = `https://outlook.live.com/calendar/0/deeplink/compose?subject=${encodeURIComponent(title)}&startdt=${dateISO}&allday=true&body=${encodeURIComponent(details || "")}`;
+  }
+  return `<span class="cal-links"><a class="small ghost" href="${esc(g)}" target="_blank" rel="noopener">📅 Google</a><a class="small ghost" href="${esc(o)}" target="_blank" rel="noopener">Outlook</a></span>`;
+}
+
+/* ---------- Points (quiz) and badges ---------- */
+state.points = {};
+const addPoints = async (id, n) => { const cur = state.points[id] || 0; state.points[id] = cur + n; await store.set("points/" + id, { n: cur + n }).catch(() => {}); };
+function badgesFor(c) {
+  const b = [];
+  const voted = state.movies.filter((m) => (m.votes || {})[c.id]);
+  const picks = state.movies.filter((m) => m.status === "watched" && m.pickedBy === c.id && m.rating);
+  const avg = picks.length ? picks.reduce((a, m) => a + m.rating, 0) / picks.length : 0;
+  const pts = state.points[c.id] || 0;
+  if (voted.length >= 10) b.push("🗳️ Super voter");
+  else if (voted.length >= 3) b.push("🗳️ Voter");
+  if (picks.length >= 2 && avg >= 4) b.push("⭐ Great taste");
+  if (picks.length >= 5) b.push("🎬 Seasoned picker");
+  if (pts >= 25) b.push("🧠 Quiz champion"); else if (pts >= 10) b.push("🧠 Quiz whiz"); else if (pts >= 3) b.push("🧠 Quizzer");
+  const series = {}; MARATHONS.forEach((s) => s.f.forEach((f) => (series[norm(f.t)] = s.n)));
+  const seen = {}; voted.filter((m) => m.status === "watched").forEach((m) => { const s = series[norm(m.title)]; if (s) seen[s] = (seen[s] || 0) + 1; });
+  const mar = Object.entries(seen).find(([, n]) => n >= 3); if (mar) b.push(`🍿 ${mar[0]} marathoner`);
+  if (state.games.filter((g) => g.source !== "psplus").length >= 5 && crewSorted()[0]?.id === c.id) b.push("🎮 Game collector");
+  return { b, pts: pts + voted.length + picks.length * 2 + Math.round(avg * picks.length) };
+}
+function renderBadges() {
+  const el = $("#badges"); if (!el) return;
+  const crew = crewSorted(); if (!crew.length) { el.innerHTML = ""; return; }
+  const rows = crew.map((c) => ({ c, ...badgesFor(c) })).sort((a, b) => b.pts - a.pts);
+  const done = state.acts.filter((a) => a.status === "done").length;
+  el.innerHTML = `<div class="panel"><h3>🏆 Trophy shelf <span class="source">points for votes, good picks and quizzes</span></h3>
+    <div class="badge-shelf">${rows.map(({ c, b, pts }, i) => `<div class="person-badges">${avatar(c, 34)}<div><strong>${i === 0 && pts > 0 ? "👑 " : ""}${esc(c.name)}</strong><div class="bdg">${b.length ? b.map((x) => `<span>${esc(x)}</span>`).join("") : `<span style="background:var(--sunk)">No badges yet</span>`}</div></div><span class="pts">${pts} pts</span></div>`).join("")}</div>
+    ${done >= 3 ? `<p class="source">🧭 Family badge: Explorers (${done} outings done)</p>` : ""}</div>`;
+}
+
+/* ---------- Subscriptions tracker ---------- */
+state.subs = [];
+const SUB_PRESETS = [["Netflix", "Netflix", "stream"], ["Disney+", "Disney+", "stream"], ["Prime Video", "Prime Video", "stream"], ["Neon", "Neon", "stream"], ["HBO Max", "HBO Max", "stream"], ["Apple TV", "Apple TV", "stream"], ["Xbox Game Pass", "gp", "game"], ["PlayStation Plus", "ps", "game"], ["Nintendo Switch Online", "nso", "game"], ["Spotify", "", "other"]];
+function subUsage(sub) {
+  if (sub.kind === "stream") {
+    const n = state.movies.filter((m) => m.status !== "watched" && WATCH_INFO[norm(m.title)] && streams(WATCH_INFO[norm(m.title)]).includes(sub.key)).length;
+    return n ? { t: `${n} film${n > 1 ? "s" : ""} in your pile stream${n > 1 ? "" : "s"} here`, c: n >= 2 ? "keep" : "" } : { t: "Nothing in your pile streams here right now", c: "pause" };
+  }
+  if (sub.key === "gp") { const n = gameCatalog ? [...gameCatalog().values()].filter((g) => g.gp && (g.lc || g.ss)).length : 0; return { t: `${n} couch co-op games included`, c: "keep" }; }
+  if (sub.key === "ps") { const n = state.games.filter((g) => g.source === "psplus").length; return n ? { t: `${n} games in your PS Plus list`, c: "keep" } : { t: "Add your PS Plus games under Games > Our games", c: "" }; }
+  return { t: "", c: "" };
+}
+function renderSubs() {
+  const el = $("#subs"); if (!el) return;
+  const subs = state.subs.slice().sort((a, b) => (b.active !== false) - (a.active !== false) || a.name.localeCompare(b.name));
+  const monthly = (x) => (Number(x.cost) || 0) / (x.cycle === "year" ? 12 : 1);
+  const active = subs.filter((x) => x.active !== false);
+  const m = active.reduce((a, x) => a + monthly(x), 0);
+  el.innerHTML = `<div class="panel"><h3>💳 Our subscriptions <span class="source">what we pay for and whether it's earning its keep</span></h3>
+    ${subs.length ? `<div class="totals"><span><b>$${m.toFixed(2)}</b> a month</span><span><b>$${(m * 12).toFixed(0)}</b> a year</span></div>
+      <div>${subs.map((x) => { const u = subUsage(x); return `<div class="sub-row"><div><strong style="${x.active === false ? "opacity:.5;text-decoration:line-through" : ""}">${esc(x.name)}</strong> <span class="mono muted">$${Number(x.cost || 0).toFixed(2)}/${x.cycle === "year" ? "yr" : "mo"}</span>${u.t ? `<div class="hint ${x.active === false ? "" : u.c}">${esc(u.t)}${x.active !== false && u.c === "pause" ? " · could pause it" : ""}</div>` : ""}</div>${state.readOnly ? "" : `<button type="button" class="small ${x.active === false ? "primary" : "ghost"}" data-act="sub-toggle" data-id="${x.id}">${x.active === false ? "Resume" : "Pause"}</button><button type="button" class="ghost small danger" data-act="sub-del" data-id="${x.id}" aria-label="Remove ${esc(x.name)}">✕</button>`}</div>`; }).join("")}</div>` : `<p class="muted" style="margin:0">Add what you pay for to see the monthly total and which ones to pause.</p>`}
+    ${state.readOnly ? "" : `<form class="add" id="sub-form"><div class="fields">
+      <label class="f">Service<select id="sub-name">${SUB_PRESETS.map(([n]) => `<option>${esc(n)}</option>`).join("")}<option value="__other">Other…</option></select></label>
+      <label class="f" id="sub-other-wrap" hidden>Name<input id="sub-other" maxlength="40"></label>
+      <label class="f">Cost (NZD)<input id="sub-cost" inputmode="decimal" placeholder="e.g. 18.99" required></label>
+      <label class="f">Every<select id="sub-cycle"><option value="month">Month</option><option value="year">Year</option></select></label>
+    </div><div class="row"><button class="primary small" type="submit">Add</button></div></form>`}
+  </div>`;
+  const f = $("#sub-form"); if (!f) return;
+  $("#sub-name").onchange = (e) => ($("#sub-other-wrap").hidden = e.target.value !== "__other");
+  f.onsubmit = async (e) => {
+    e.preventDefault();
+    const pick = $("#sub-name").value, pre = SUB_PRESETS.find((p) => p[0] === pick);
+    const name = pick === "__other" ? $("#sub-other").value.trim() : pick; if (!name) return;
+    const cost = parseFloat($("#sub-cost").value); if (!(cost >= 0)) return;
+    await store.add("subs", { name, cost, cycle: $("#sub-cycle").value, key: pre ? pre[1] : "", kind: pre ? pre[2] : "other", active: true, createdAt: now() });
+    toast(`Added ${name}`);
+  };
+}
+
+/* ---------- Theme night (Claude plans dinner, snacks and a shopping list) ---------- */
+state.themes = {};
+function themeBlock(m) {
+  const k = norm(m.title), t = state.themes[k];
+  if (state.themeBusy) return `<div class="snacks"><span class="label">Theme night</span><p style="margin:0">Planning your ${esc(m.title)} night…</p></div>`;
+  if (!t) return sampler && !state.readOnly ? `<button type="button" class="primary" data-act="th-plan" data-title="${esc(m.title)}">🍕 Plan a ${esc(m.title)} theme night</button>` : "";
+  const done = mn.shop || {};
+  return `<div class="snacks"><span class="label">${esc(t.theme || "Theme night")}</span>
+    ${t.dinner ? `<div>🍽️ <strong>Dinner:</strong> ${esc(t.dinner)}</div>` : ""}${t.snacks?.length ? `<div>🍿 <strong>Snacks:</strong> ${esc(t.snacks.join(", "))}</div>` : ""}${t.drink ? `<div>🥤 <strong>Drink:</strong> ${esc(t.drink)}</div>` : ""}${t.activity ? `<div>🎉 <strong>Fun extra:</strong> ${esc(t.activity)}</div>` : ""}
+    ${t.shopping?.length ? `<span class="label" style="margin-top:6px">Shopping list</span><div class="shop">${t.shopping.map((x, i) => `<label class="${done[k + i] ? "done" : ""}"><input type="checkbox" data-act="th-shop" data-k="${esc(k + i)}" ${done[k + i] ? "checked" : ""}><span>${esc(x)}</span></label>`).join("")}</div>` : ""}
+    ${state.readOnly ? "" : `<button type="button" class="ghost small" data-act="th-plan" data-title="${esc(m.title)}" style="color:#fff">Try another idea</button>`}</div>`;
+}
+async function planTheme(title) {
+  if (!sampler) return;
+  state.themeBusy = true; renderMovieNight();
+  try {
+    const r = await sampler.json(`A New Zealand family is having a movie night watching "${title}". Suggest a fun, easy, family-friendly theme night that matches the film. Use ingredients easy to buy at a NZ supermarket. Reply with only JSON: {"theme":"short catchy name","dinner":"one easy dinner idea","snacks":["2 to 4 snacks"],"drink":"one drink (non-alcoholic)","activity":"one quick fun extra, e.g. dress-up or a game","shopping":["6 to 12 shopping list items"]}`, { modelTier: "default", cache: false });
+    const clean = (v, n) => (typeof v === "string" ? v.slice(0, n) : null), arr = (v, n) => (Array.isArray(v) ? v.filter((x) => typeof x === "string").slice(0, n).map((x) => x.slice(0, 80)) : []);
+    const t = { theme: clean(r.theme, 60), dinner: clean(r.dinner, 160), snacks: arr(r.snacks, 4), drink: clean(r.drink, 80), activity: clean(r.activity, 160), shopping: arr(r.shopping, 12), at: now() };
+    state.themes[norm(title)] = t; await store.set("themes/" + (norm(title).slice(0, 150) || "x"), t).catch(() => {});
+  } catch (e) { toast(e && e.code === "not_granted" ? "Theme ideas need your OK to use Claude." : "Couldn't come up with a theme just now. Try again."); }
+  finally { state.themeBusy = false; renderMovieNight(); }
+}
+
+/* ---------- Post-movie quiz ---------- */
+const qz = { title: null, qs: null, i: 0, picked: null, busy: false, err: null, got: {} };
+function renderQuiz() {
+  const el = $("#quiz"); if (!el) return;
+  const crew = crewSorted();
+  let body;
+  if (qz.busy) body = `<p>Writing a quiz about ${esc(qz.title)}…</p>`;
+  else if (qz.err) body = `<p>${esc(qz.err)}</p>`;
+  else if (qz.qs && qz.i >= qz.qs.length) {
+    const tot = Object.entries(qz.got).sort((a, b) => b[1] - a[1]);
+    body = `<h2>Quiz done! 🎉</h2>${tot.length ? `<div class="lv-tally">${tot.map(([id, n]) => `<div class="lv-row"><span>${esc(crewById(id)?.name || "?")}</span><b>${n} point${n === 1 ? "" : "s"}</b></div>`).join("")}</div><p style="opacity:.75">Points go on the trophy shelf in the Family tab.</p>` : `<p>No points handed out this time.</p>`}`;
+  } else if (qz.qs) {
+    const q = qz.qs[qz.i];
+    body = `<span class="label">Question ${qz.i + 1} of ${qz.qs.length}</span><div class="quiz-q">${esc(q.q)}</div>
+      <div style="display:grid;gap:8px;width:100%">${q.options.map((o, j) => `<button type="button" class="quiz-opt ${qz.picked == null ? "" : j === q.answer ? "right" : j === qz.picked ? "wrong" : ""}" data-act="qz-pick" data-j="${j}" ${qz.picked == null ? "" : "disabled"}>${esc(o)}</button>`).join("")}</div>
+      ${qz.picked == null ? "" : `<p style="margin:0">Who got it right? Tap to give a point:</p><div class="kid-who">${crew.map((c) => `<button type="button" class="vote" aria-pressed="${!!(qz.round || {})[c.id]}" data-act="qz-got" data-who="${c.id}"><span class="dot" style="background:${esc(c.color)};opacity:1;filter:none">${initial(c.name)}</span>${esc(c.name)}</button>`).join("")}</div><button type="button" class="primary" data-act="qz-next">${qz.i + 1 < qz.qs.length ? "Next question" : "See the scores"}</button>`}`;
+  }
+  el.innerHTML = `<button type="button" class="x" data-act="qz-close" aria-label="Close">✕</button><div class="box"><span class="label">🧠 ${esc(qz.title || "")} quiz</span>${body || ""}</div>`;
+}
+async function openQuiz(title) {
+  $("#quiz")?.remove(); Object.assign(qz, { title, qs: null, i: 0, picked: null, busy: true, err: null, got: {}, round: {} });
+  const el = document.createElement("div"); el.id = "quiz"; el.className = "overlay"; el.setAttribute("role", "dialog"); document.body.appendChild(el); renderQuiz();
+  try {
+    const r = await sampler.json(`Write a fun 5-question multiple-choice quiz for a family (including kids) who just watched the film "${title}". Ask about characters, memorable moments, places and music, and keep it light. Only ask things you are confident are correct for this specific film. Reply with only JSON: {"known":true,"questions":[{"q":"question","options":["A","B","C","D"],"answer":0}]} where answer is the index of the right option. If you don't know this film well, reply {"known":false}.`, { modelTier: "default", cache: false });
+    const qs = (r && r.known && Array.isArray(r.questions) ? r.questions : []).filter((q) => q && typeof q.q === "string" && Array.isArray(q.options) && q.options.length >= 2 && Number.isInteger(q.answer) && q.answer >= 0 && q.answer < q.options.length).slice(0, 6)
+      .map((q) => ({ q: q.q.slice(0, 200), options: q.options.slice(0, 4).map((o) => String(o).slice(0, 100)), answer: q.answer }));
+    if (!qs.length) qz.err = "Claude doesn't know this film well enough for a quiz. Try another one."; else qz.qs = qs;
+  } catch (e) { qz.err = e && e.code === "not_granted" ? "Quizzes need your OK to use Claude. Reload the page to be asked again." : "Couldn't make a quiz just now. Try again in a moment."; }
+  qz.busy = false; renderQuiz();
+}
+
+/* ---------- Live family vote (everyone swipes on their own phone; shared db keeps it in sync) ---------- */
+state.live = null; state.liveVotes = {};
+const LV_ME = "popcorn-parks-me";
+let lvMe = (() => { try { return localStorage.getItem(LV_ME) || null; } catch { return null; } })();
+const liveOn = () => state.live && state.live.active && Date.now() - (state.live.startedAt || 0) < 6 * 3600e3;
+function liveTally() {
+  const L = state.live; if (!L) return [];
+  const t = L.items.map((it) => ({ ...it, yes: 0, who: [] }));
+  for (const [id, v] of Object.entries(state.liveVotes)) if (v.sid === L.sid && crewById(id)) for (const k of v.yes || []) { const x = t.find((y) => y.k === k); if (x) { x.yes++; x.who.push(crewById(id).name); } }
+  return t.sort((a, b) => b.yes - a.yes);
+}
+function liveDone(id) { const v = state.liveVotes[id]; return v && v.sid === state.live.sid && (v.yes || []).length + (v.no || []).length >= state.live.items.length; }
+function renderLiveBanner() {
+  const b = $("#live-banner"); if (!b) return;
+  if (!liveOn()) { b.hidden = true; return; }
+  const voters = Object.keys(state.liveVotes).filter((id) => state.liveVotes[id].sid === state.live.sid && crewById(id));
+  b.hidden = false;
+  b.innerHTML = `<span>🗳️ <strong>Family vote on now</strong>: ${state.live.kind === "game" ? "what to play" : "what to watch"} · ${voters.length} voting</span><button type="button" class="primary small" data-act="lv-open">Join the vote</button>`;
+}
+function renderLive() {
+  const el = $("#livevote"); if (!el) return;
+  const L = state.live, crew = crewSorted();
+  if (!liveOn()) { el.innerHTML = `<button type="button" class="x" data-act="lv-close" aria-label="Close">✕</button><div class="box"><h2>The vote has finished</h2>${L && L.winner ? `<p>The winner was <strong>${esc(L.winner)}</strong> 🎉</p>` : ""}</div>`; return; }
+  if (!lvMe || !crewById(lvMe)) {
+    el.innerHTML = `<button type="button" class="x" data-act="lv-close" aria-label="Close">✕</button><div class="box"><span class="label">Family vote</span><h2>Who are you?</h2><div class="kid-who">${crew.map((c) => `<button type="button" class="vote" data-act="lv-me" data-who="${c.id}"><span class="dot" style="background:${esc(c.color)};opacity:1;filter:none">${initial(c.name)}</span>${esc(c.name)}</button>`).join("")}</div>${crew.length ? "" : "<p>Add your family on the Family tab first.</p>"}</div>`;
+    return;
+  }
+  const mine = state.liveVotes[lvMe]?.sid === L.sid ? state.liveVotes[lvMe] : { yes: [], no: [] };
+  const seen = new Set([...(mine.yes || []), ...(mine.no || [])]);
+  const next = L.items.find((it) => !seen.has(it.k));
+  const tally = liveTally(), max = Math.max(1, ...tally.map((x) => x.yes));
+  const voters = crew.filter((c) => state.liveVotes[c.id]?.sid === L.sid);
+  const allDone = voters.length && voters.every((c) => liveDone(c.id));
+  const art = (it) => (L.kind === "game" ? gameArt(gameCatalog().get(it.k) || { t: it.t }) : poster(it.t));
+  el.innerHTML = `<button type="button" class="x" data-act="lv-close" aria-label="Close">✕</button><div class="box">
+    <span class="label">${esc(crewById(lvMe).name)} voting · <a href="#" data-act="lv-switch" style="color:inherit">not you?</a></span>
+    ${next ? `<div class="swipe" id="lv-card">${art(next)}</div><h2>${esc(next.t)}</h2>
+      <div class="kid-btns"><button type="button" class="no" data-act="lv-no" data-k="${esc(next.k)}" aria-label="No">👎</button><button type="button" class="yes" data-act="lv-yes" data-k="${esc(next.k)}" aria-label="Yes">👍</button></div>
+      <p style="opacity:.6;font-size:.8rem">${L.items.length - seen.size} left</p>`
+      : `<h2>${allDone ? "Everyone's voted! 🎉" : "Done! Waiting for the others…"}</h2>`}
+    <div class="lv-who">${voters.map((c) => `<span>${liveDone(c.id) ? "✅" : "⏳"} ${esc(c.name)}</span>`).join("")}</div>
+    <div class="lv-tally">${tally.slice(0, next ? 3 : 10).filter((x) => x.yes).map((x, i) => `<div class="lv-row"><span>${i === 0 && !next ? "🏆 " : ""}${esc(x.t)}</span><b>${x.yes} 👍</b><span class="bar"><i style="width:${(x.yes / max) * 100}%"></i></span></div>`).join("")}</div>
+    ${!next || allDone ? `<div class="row"><button type="button" class="primary" data-act="lv-end">${tally[0]?.yes ? `Pick ${esc(tally[0].t)}` : "End the vote"}</button></div>` : ""}
+  </div>`;
+  const card = $("#lv-card"); if (!card) return;
+  let x0 = null, dx = 0;
+  card.onpointerdown = (e) => { x0 = e.clientX; card.setPointerCapture(e.pointerId); card.style.transition = "none"; };
+  card.onpointermove = (e) => { if (x0 == null) return; dx = e.clientX - x0; card.style.transform = `translateX(${dx}px) rotate(${dx / 18}deg)`; };
+  card.onpointerup = () => { card.style.transition = ""; card.style.transform = ""; if (Math.abs(dx) > 80) document.querySelector(dx > 0 ? "[data-act=lv-yes]" : "[data-act=lv-no]").click(); x0 = null; dx = 0; };
+}
+function openLive() { $("#livevote")?.remove(); const el = document.createElement("div"); el.id = "livevote"; el.className = "overlay"; el.setAttribute("role", "dialog"); el.setAttribute("aria-label", "Family vote"); document.body.appendChild(el); renderLive(); }
+async function startLive(kind) {
+  if (state.readOnly) { toast("You need access to use the app to start a vote."); return; }
+  const items = kind === "game" ? gamePicks().slice(0, 10).map((p) => ({ k: norm(p.g.t), t: p.g.t })) : tonightPicks().slice(0, 10).map((p) => ({ k: p.k, t: p.d.t }));
+  if (items.length < 2) { toast("Not enough picks for a vote. Try fewer filters."); return; }
+  await store.set("live/session", { kind, items, sid: Math.random().toString(36).slice(2, 10), startedAt: now(), active: true, startedBy: lvMe || null });
+  openLive(); toast("Vote started! Everyone can join from the banner at the top.");
+}
+
+/* ---------- Board and card games (screen-free night) ---------- */
+// [name, minP, maxP, age, minutes, coop?, emoji, note]
+const BOARD = [
+  ["Ticket to Ride", 2, 5, 8, 60, 0, "🚂", "Collect train cards and claim routes across the map."], ["Ticket to Ride: First Journey", 2, 4, 6, 20, 0, "🚃", "The quicker kids' version."], ["Catan", 3, 4, 10, 90, 0, "🐑", "Trade, build roads and settle an island."],
+  ["Carcassonne", 2, 5, 7, 35, 0, "🏰", "Lay tiles to build cities, roads and fields."], ["Pandemic", 2, 4, 8, 45, 1, "🦠", "Work together to stop four diseases spreading."], ["Forbidden Island", 2, 4, 10, 30, 1, "🏝️", "Grab the treasures before the island sinks."],
+  ["Azul", 2, 4, 8, 40, 0, "🧩", "Pick pretty tiles and build a wall pattern."], ["Kingdomino", 2, 4, 8, 15, 0, "👑", "Domino-style kingdom building; quick and easy."], ["Sushi Go!", 2, 5, 8, 15, 0, "🍣", "Pick-and-pass card game with cute sushi."],
+  ["Codenames", 4, 8, 10, 15, 0, "🕵️", "Team word-guessing from one-word clues."], ["Dixit", 3, 8, 8, 30, 0, "🎨", "Tell stories about dreamy picture cards."], ["Just One", 3, 7, 8, 20, 1, "💬", "Everyone gives a clue word; duplicates are cancelled."],
+  ["Uno", 2, 10, 7, 30, 0, "🃏", "Match colours and numbers; shout UNO!"], ["Dobble (Spot It!)", 2, 8, 6, 15, 0, "👀", "Spot the matching symbol fastest."], ["Exploding Kittens", 2, 5, 7, 15, 0, "🐱", "Avoid the exploding kitten card."],
+  ["Monopoly Deal", 2, 5, 8, 15, 0, "💵", "The fast card version of Monopoly."], ["Monopoly", 2, 6, 8, 120, 0, "🎩", "The classic, for a long rainy afternoon."], ["Scrabble", 2, 4, 10, 90, 0, "🔤", "Build words on the board."],
+  ["Cluedo", 3, 6, 8, 45, 0, "🔍", "Solve the mystery: who, where and with what."], ["Guess Who?", 2, 2, 6, 20, 0, "🤔", "Yes-or-no questions to find the mystery face."], ["Connect 4", 2, 2, 6, 10, 0, "🔴", "Four in a row wins."],
+  ["Jenga", 1, 8, 6, 15, 0, "🧱", "Pull blocks without toppling the tower."], ["Hoot Owl Hoot!", 2, 4, 4, 15, 1, "🦉", "Co-op colour matching for little ones."], ["Outfoxed!", 2, 4, 5, 20, 1, "🦊", "Co-op whodunit: find the thief fox."],
+  ["Rummikub", 2, 4, 8, 60, 0, "🔢", "Make runs and sets with number tiles."], ["King of Tokyo", 2, 6, 8, 30, 0, "🦖", "Roll dice as giant monsters battling for Tokyo."], ["Camel Up", 3, 8, 8, 30, 0, "🐫", "Bet on a wobbly camel race."],
+  ["Splendor", 2, 4, 10, 30, 0, "💎", "Collect gems and buy cards."], ["Hanabi", 2, 5, 8, 25, 1, "🎆", "Co-op card game where you can't see your own hand."], ["The Crew", 3, 5, 10, 20, 1, "🚀", "Co-op trick-taking missions in space."],
+  ["Mysterium", 2, 7, 10, 45, 1, "👻", "A ghost gives picture clues to solve a murder."], ["Telestrations", 4, 8, 12, 30, 0, "✏️", "Drawing telephone game; lots of laughs."], ["Labyrinth", 2, 4, 7, 20, 0, "🌀", "Shift the maze to reach your treasures."],
+].map(([t, a, b, age, min, coop, e, d]) => ({ t, a, b, age, min, coop, e, d }));
+const bg = { players: 0, time: "any", style: "any", age: "any" };
+function renderGameBoard(el) {
+  const owned = new Set(state.games.filter((d) => d.platform === "board").map((d) => norm(d.title)));
+  const list = BOARD.filter((x) => (!bg.players || (x.a <= bg.players && x.b >= bg.players)) && (bg.time === "any" || (bg.time === "quick" ? x.min <= 20 : bg.time === "mid" ? x.min <= 45 : x.min > 45))
+    && (bg.style === "any" || (bg.style === "coop" ? x.coop : !x.coop)) && (bg.age === "any" || (bg.age === "little" ? x.age <= 6 : bg.age === "kids" ? x.age <= 8 : true)))
+    .sort((a, b) => owned.has(norm(b.t)) - owned.has(norm(a.t)) || a.min - b.min);
+  const chips = (key, opts) => opts.map(([k, l]) => `<button type="button" class="chip small" data-act="bg-set" data-key="${key}" data-k="${k}" aria-pressed="${String(bg[key]) === String(k)}">${l}</button>`).join("");
+  el.innerHTML = `<div class="filters open"><h3>🎲 Screen-free game night</h3>
+    <div class="grp"><span class="label">Players</span><div class="chips">${chips("players", [[0, "Any"], [2, "2"], [3, "3"], [4, "4"], [5, "5"], [6, "6+"]])}</div></div>
+    <div class="grp"><span class="label">How long?</span><div class="chips">${chips("time", [["any", "Any"], ["quick", "Quick (20 min)"], ["mid", "Under 45 min"], ["long", "Long game"]])}</div></div>
+    <div class="grp"><span class="label">Play style</span><div class="chips">${chips("style", [["any", "Any"], ["coop", "🤝 Work together"], ["vs", "⚔️ Compete"]])}</div></div>
+    <div class="grp"><span class="label">Youngest player</span><div class="chips">${chips("age", [["any", "Any age"], ["kids", "8 and under"], ["little", "6 and under"]])}</div></div></div>
+    <p class="source">${list.length} games fit. Tick the ones you own and they come first. Ages and times are from the box and roughly right.</p>
+    <div class="bg-list">${list.map((x) => { const own = owned.has(norm(x.t)); return `<div class="bg"><div class="top"><span class="emoji" aria-hidden="true">${x.e}</span><div><strong>${esc(x.t)}</strong><div class="gbadges"><span>👥 ${x.a === x.b ? x.a : x.a + "–" + x.b}</span><span>⏱️ ${x.min} min</span><span>${x.age}+</span>${x.coop ? `<span class="co">🤝 Co-op</span>` : ""}</div></div></div><p class="muted" style="margin:0;font-size:.84rem">${esc(x.d)}</p>${state.readOnly ? "" : `<button type="button" class="small ${own ? "primary" : "ghost"}" data-act="bg-own" data-t="${esc(x.t)}" style="justify-self:start">${own ? "✅ We own it" : "We own it"}</button>`}</div>`; }).join("")}</div>`;
+}
+
+/* ---------- School holiday planner ---------- */
+const HOL_KEY = "popcorn-parks-holiday";
+const hol = (() => { try { return { start: "", days: 7, seed: 1, ...JSON.parse(localStorage.getItem(HOL_KEY) || "{}") }; } catch { return { start: "", days: 7, seed: 1 }; } })();
+const saveHol = () => { try { localStorage.setItem(HOL_KEY, JSON.stringify(hol)); } catch {} };
+function holidayPlan() {
+  // Deterministic shuffle so "Shuffle" gives a new plan and the plan stays put otherwise.
+  let x = hol.seed * 9301 + 49297; const rnd = () => ((x = (x * 9301 + 49297) % 233280) / 233280);
+  const max = (RANGES.find((r) => r[0] === wk.range) || RANGES[2])[2];
+  const pool = PLACES.map((p) => ({ p, d: driveFrom(p) })).filter((o) => o.d.min <= max);
+  const out = pool.filter((o) => !o.p.tags.includes("rainy")).sort(() => rnd() - 0.5);
+  const ind = pool.filter((o) => o.p.tags.includes("rainy")).sort(() => rnd() - 0.5);
+  const pattern = ["out", "out", "movie", "out", "home", "out", "movie"];
+  const start = new Date((hol.start || nextSaturday()) + "T12:00:00");
+  const movies = tonightPicks().filter((p) => kidSafe(p.d)).slice(0, 20).sort(() => rnd() - 0.5);
+  let oi = 0, ii = 0, mi = 0;
+  return Array.from({ length: Math.min(21, Math.max(1, hol.days)) }, (_, i) => {
+    const d = new Date(start); d.setDate(d.getDate() + i);
+    const kind = pattern[i % pattern.length];
+    const iso = d.toISOString().slice(0, 10);
+    if (kind === "out" && out.length) { const o = out[oi++ % out.length], b = ind[ii++ % Math.max(1, ind.length)]; return { iso, d, kind, title: o.p.emoji + " " + o.p.name, note: `🚗 ${o.d.min} min · ${o.p.cost}`, place: o.p, backup: b ? b.p : null }; }
+    if (kind === "movie") { const m = movies[mi++ % Math.max(1, movies.length)]; const b = ind[ii++ % Math.max(1, ind.length)]; return { iso, d, kind, title: "🎬 Movie day" + (m ? ": " + m.d.t : ""), note: b ? `Plus a trip to ${b.p.name}` : "Popcorn and blankets", place: b ? b.p : null }; }
+    return { iso, d, kind, title: "🏡 Home day", note: "Board games, baking or a backyard picnic", place: null };
+  });
+}
+function renderHoliday() {
+  const el = $("#holiday"); if (!el) return;
+  const plan = holidayPlan();
+  el.innerHTML = `<div class="mopts" style="margin:10px 0"><label class="f">First day<input type="date" id="hol-start" value="${esc(hol.start || nextSaturday())}"></label><label class="f">How many days<input type="number" id="hol-days" min="1" max="21" value="${hol.days}" style="width:5em"></label><button type="button" class="small" data-act="hol-shuffle">🔀 Shuffle the plan</button></div>
+    <p class="source">Uses your Weekend choices for how far you'll go and where you start. Outings have an indoor backup for wet days. Check your school's holiday dates.</p>
+    <div class="chart">${plan.map((x) => `<div class="hol-day"><span class="d">${esc(x.d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" }))}</span><div><strong>${esc(x.title)}</strong><div class="alt">${esc(x.note)}${x.backup ? ` · ☔ Backup: ${esc(x.backup.name)}` : ""}</div></div>${x.place && !state.readOnly ? `<button type="button" class="small" data-act="hol-add" data-name="${esc(x.place.name)}" data-iso="${x.iso}">Plan it</button>` : "<span></span>"}</div>`).join("")}</div>`;
+  $("#hol-start").onchange = (e) => { hol.start = e.target.value; saveHol(); renderHoliday(); };
+  $("#hol-days").onchange = (e) => { hol.days = Math.max(1, Math.min(21, Number(e.target.value) || 7)); saveHol(); renderHoliday(); };
+}
+
+document.addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-act^='sub-'], [data-act^='th-'], [data-act^='qz-'], [data-act^='lv-'], [data-act^='bg-'], [data-act^='hol-']"); if (!b) return;
+  const a = b.dataset.act;
+  switch (a) {
+    case "sub-toggle": { const x = state.subs.find((y) => y.id === b.dataset.id); if (x) await store.update("subs/" + x.id, { active: x.active === false }); break; }
+    case "sub-del": await store.remove("subs/" + b.dataset.id); break;
+    case "th-plan": planTheme(b.dataset.title); break;
+    case "th-shop": (mn.shop ||= {})[b.dataset.k] = b.checked; saveMn(); b.closest("label").classList.toggle("done", b.checked); break;
+    case "qz-open": openQuiz(b.dataset.title); break;
+    case "qz-close": $("#quiz")?.remove(); renderBadges(); break;
+    case "qz-pick": qz.picked = Number(b.dataset.j); qz.round = {}; renderQuiz(); break;
+    case "qz-got": qz.round[b.dataset.who] = !qz.round[b.dataset.who]; renderQuiz(); break;
+    case "qz-next": for (const [id, on] of Object.entries(qz.round || {})) if (on) { qz.got[id] = (qz.got[id] || 0) + 1; await addPoints(id, 1); } qz.i++; qz.picked = null; qz.round = {}; renderQuiz(); break;
+    case "lv-start": startLive(b.dataset.kind); break;
+    case "lv-open": openLive(); break;
+    case "lv-close": $("#livevote")?.remove(); break;
+    case "lv-switch": e.preventDefault(); lvMe = null; renderLive(); break;
+    case "lv-me": lvMe = b.dataset.who; try { localStorage.setItem(LV_ME, lvMe); } catch {} renderLive(); break;
+    case "lv-yes": case "lv-no": {
+      const L = state.live; if (!L || !lvMe) return;
+      const cur = state.liveVotes[lvMe]?.sid === L.sid ? state.liveVotes[lvMe] : { sid: L.sid, yes: [], no: [] };
+      const v = { sid: L.sid, yes: [...(cur.yes || [])], no: [...(cur.no || [])] };
+      (a === "lv-yes" ? v.yes : v.no).push(b.dataset.k);
+      $("#lv-card")?.classList.add(a === "lv-yes" ? "gone-r" : "gone-l");
+      state.liveVotes[lvMe] = v; await store.set("live/" + lvMe, v);
+      setTimeout(renderLive, 200); break;
+    }
+    case "lv-end": {
+      const top = liveTally()[0], L = state.live;
+      await store.set("live/session", { ...L, active: false, winner: top && top.yes ? top.t : null });
+      $("#livevote")?.remove();
+      if (top && top.yes) {
+        if (L.kind === "movie") { const d = MOVIE_DATA[top.k]; if (d && !inPile(d.t)) await store.add("movies", { title: d.t, year: d.y || null, runtime: d.r || null, genre: "", suggestedBy: null, votes: {}, status: "pool", createdAt: now() }); showReveal({ k: top.k, d: MOVIE_DATA[top.k] || { t: top.t }, why: [`${top.yes} 👍 in the family vote`] }); }
+        else { const g = gameCatalog().get(top.k); if (g) gameReveal(g); }
+      }
+      break;
+    }
+    case "bg-set": bg[b.dataset.key] = b.dataset.key === "players" ? Number(b.dataset.k) : b.dataset.k; renderGames(); break;
+    case "bg-own": { const t = b.dataset.t, have = state.games.filter((d) => d.platform === "board" && norm(d.title) === norm(t)); if (have.length) for (const d of have) await store.remove("games/" + d.id); else await store.add("games", { title: t, source: "owned", platform: "board", createdAt: now() }); break; }
+    case "hol-shuffle": hol.seed = Math.floor(Math.random() * 1e6); saveHol(); renderHoliday(); break;
+    case "hol-add": {
+      const p = PLACES.find((x) => x.name === b.dataset.name); if (!p) return;
+      const exist = state.acts.find((x) => norm(x.name) === norm(p.name) && x.status !== "done");
+      const category = p.tags.includes("beach") || p.tags.includes("walk") ? "parks" : p.cost !== "Free" ? "kids" : "together";
+      if (exist) await store.update("acts/" + exist.id, { status: "planned", plannedFor: b.dataset.iso });
+      else await store.add("acts", { name: p.name, category, cost: p.cost, where: p.name, notes: p.note, votes: {}, status: "planned", plannedFor: b.dataset.iso, createdAt: now() });
+      toast(`${p.name} planned for ${fmtDate(b.dataset.iso)}`); break;
+    }
+  }
+});
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") { $("#quiz")?.remove(); $("#livevote")?.remove(); } });
+
+function render() { renderLiveBanner(); renderBadges(); renderSubs(); renderHoliday(); if ($("#livevote")) renderLive(); const rb = $("#ro-banner"); if (rb) rb.hidden = !state.readOnly; renderGames(); renderTickets(); renderServiceMonth(); renderMovies(); renderExplore(); renderStats(); if ($("#movienight")) renderMovieNight(); if ($("#kidpicks")) renderKids(); renderActs(); renderDiscover(); renderTonight(); renderMarathon(); renderCrew(); renderHistory(); }
 
 /* ---------- Routing ---------- */
 function route() {
+  // Switching tabs (or the phone's back button) closes any full-screen pop-up.
+  ["reveal", "quiz", "livevote", "kidpicks", "movienight"].forEach((id) => document.getElementById(id)?.remove());
   const tab = ["movies", "weekend", "discover", "games", "crew", "history"].includes(location.hash.slice(1)) ? location.hash.slice(1) : "movies";
   document.querySelectorAll("section.view").forEach((s) => (s.hidden = s.id !== "view-" + tab));
   document.querySelectorAll("nav.tabs a").forEach((a) => (a.dataset.tab === tab ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current")));
@@ -2121,7 +2494,11 @@ $("#theme-btn").addEventListener("click", () => { const t = document.documentEle
   store.watch("crew", (d) => { state.crew = d; mark.crew(); render(); }, onErr);
   store.watch("movies", (d) => { state.movies = d; mark.movies(); render(); }, onErr);
   store.watch("acts", (d) => { state.acts = d; mark.acts(); render(); }, onErr);
-  store.watch("games", (d) => { state.games = d; renderGames(); }, () => {});
+  store.watch("games", (d) => { state.games = d; renderGames(); renderBadges(); }, () => {});
+  store.watch("subs", (d) => { state.subs = d; renderSubs(); }, () => {});
+  store.watch("points", (d) => { state.points = {}; d.forEach((x) => (state.points[x.id] = x.n || 0)); renderBadges(); }, () => {});
+  store.watch("themes", (d) => { state.themes = {}; d.forEach(({ id, ...v }) => (state.themes[id] = v)); if ($("#movienight")) renderMovieNight(); }, () => {});
+  store.watch("live", (d) => { const s = d.find((x) => x.id === "session"); state.live = s || null; state.liveVotes = {}; d.filter((x) => x.id !== "session").forEach(({ id, ...v }) => (state.liveVotes[id] = v)); renderLiveBanner(); if ($("#livevote")) renderLive(); }, () => {});
   store.watch("info", (d) => { d.forEach((x) => { const { id, ...v } = x; state.info[id] = v; }); render(); }, () => {});
   store.watchDoc("charts/new", (d) => { state.newCharts = d || {}; renderDiscover(); }, () => { state.newCharts = {}; renderDiscover(); });
   store.watchDoc("charts/streaming", (d) => { state.charts = d || {}; renderDiscover(); }, () => { state.charts = {}; renderDiscover(); });
