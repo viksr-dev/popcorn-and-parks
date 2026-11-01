@@ -53,6 +53,17 @@ A family planner for movie nights and weekend activities. It is a single HTML fi
 - 🏖️ School holiday planner in Weekend: a day-by-day mix of outings, movie days and home days, each outing with an indoor backup.
 - 📱 How to add the app to your phone's home screen (Family tab).
 
+**More family extras**
+- 📺 TV shows (Discover > TV shows): track what you're watching and which episode each person is up to; alerts when a new season lands or the next episode airs (also on the Movies tab). Find shows by genre, age and your streaming services. Data via `python3 tools/fetch_tv.py`.
+- 📸 Scrapbook: add photos to anything in History; a memory wall and a "This time last year" card.
+- 🏁 Scoreboard (Games tab): log who won, with overall and per-game leagues; wins earn points and badges.
+- 🎵 Theme night Spotify playlist and 📅 automatic Google Calendar events, using each person's own claude.ai connectors (set on the Family tab).
+- 📖 Theme night recipes from Claude, with copy and a link to James's Recipe Book.
+- 💰 Monthly fun budget: subscriptions plus what outings cost, with copy and a link to Budget Planner.
+- 🎂 Special days: the birthday person gets the movie pick, with outing ideas.
+- 🏅 Points and rewards: +1/+5 for chores, spend 10 to pick the next movie or for 30 minutes of game time.
+- ⚡ Only the open tab is drawn, so the app stays quick on phones.
+
 **History** of every movie watched and activity done, with ratings.
 
 Starter buttons fill an empty planner with a few family movies and general activity ideas you can delete.
