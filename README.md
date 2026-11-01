@@ -64,6 +64,13 @@ A family planner for movie nights and weekend activities. It is a single HTML fi
 - 🏅 Points and rewards: +1/+5 for chores, spend 10 to pick the next movie or for 30 minutes of game time.
 - ⚡ Only the open tab is drawn, so the app stays quick on phones.
 
+**Easier to use**
+- ☀️ Today (first tab): movie night, coming-up plans or a weekend idea, new episodes, birthdays, a game-night idea and quick actions.
+- 👋 Quick tour on first visit (replay from Family › Settings); picking your name personalises Today and live votes.
+- Family tab has Family, History, Money and Settings sections, keeping the bottom bar to six buttons.
+- 💾 Backup: download everything as a JSON file (or copy it).
+- 🔠 Display: text size, calmer screen (no animation) and higher contrast, saved per device; focus outlines for keyboard users.
+
 **History** of every movie watched and activity done, with ratings.
 
 Starter buttons fill an empty planner with a few family movies and general activity ideas you can delete.
