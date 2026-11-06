@@ -412,6 +412,9 @@ a.small.ghost { background: transparent; }
 .lib-row:last-child { border-bottom: none; }
 .photo-pick { display: grid; gap: 6px; }
 .photo-pick label { display: flex; gap: 8px; align-items: center; }
+.btn-photo { cursor: pointer; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; font-weight: 600; background: var(--card, transparent); }
+#poster-pick:not(:empty) { margin: 12px 0; padding: 14px; border: 1px solid var(--line); border-radius: 14px; }
+#poster-pick .row { margin-top: 8px; flex-wrap: wrap; }
 .store-links { display: flex; gap: 8px; flex-wrap: wrap; }
 /* Phone: shorter filter panels and bigger tap targets */
 .f-more { display: none; }
@@ -640,11 +643,12 @@ body[data-tab="today"] #tickets { display: none; }
       <div><h2>The pile</h2><p>Vote on what to watch next. Whoever's turn it is makes the call.</p></div>
       <div class="row">
         <select id="m-sort" aria-label="Sort movies" style="width:auto"><option value="votes">Most votes</option><option value="new">Newest</option><option value="short">Shortest</option></select>
+        <label class="btn-photo" id="poster-btn" hidden>📷 Poster photos<input type="file" accept="image/*" multiple id="poster-photo" hidden></label>
         <button type="button" id="spin" class="primary">Surprise us</button>
       </div>
     </div>
     <details class="adder">
-      <summary><span class="plus" aria-hidden="true">+</span>Suggest a movie<span class="hint">or add one from Discover</span></summary>
+      <summary><span class="plus" aria-hidden="true">+</span>Suggest a movie<span class="hint">or snap posters with 📷, or add from Discover</span></summary>
       <form class="add" id="movie-form">
         <div class="fields">
           <label class="f wide">Title<input id="m-title" required maxlength="120" placeholder="e.g. Paddington 2" autocomplete="off"></label>
@@ -656,6 +660,7 @@ body[data-tab="today"] #tickets { display: none; }
         <div class="row"><button class="primary" type="submit">Add to the pile</button></div>
       </form>
     </details>
+    <div id="poster-pick"></div>
     <div id="special-up"></div>
     <div id="tv-up"></div>
     <div id="svc-month"></div>
@@ -1085,6 +1090,7 @@ function renderTickets() {
 }
 
 function renderMovies() {
+  renderPosterPick();
   const sel = $("#m-by"), prev = sel.value;
   sel.innerHTML = `<option value="">Someone</option>` + crewSorted().map((c) => `<option value="${c.id}">${esc(c.name)}</option>`).join("");
   sel.value = prev || picker()?.id || "";
@@ -1240,6 +1246,63 @@ function addButton(m) {
   return `<div class="row-btns">${aboutButton(m)}${add}</div>`;
 }
 let sampler = null;
+/* Poster photos: snap one or more movie posters (or a cinema board) and add the films to the pile. */
+const posterRead = { busy: 0, done: 0, found: null, err: "" };
+function renderPosterPick() {
+  const btn = $("#poster-btn"); if (btn) btn.hidden = !sampler || state.readOnly;
+  const el = $("#poster-pick"); if (!el) return;
+  const pr = posterRead;
+  if (pr.busy) { el.innerHTML = `<p>Reading ${pr.busy === 1 ? "the poster" : `${pr.busy} photos`}…${pr.busy > 1 ? ` ${pr.done} of ${pr.busy} done` : ""}</p>`; return; }
+  if (pr.err && !pr.found) { el.innerHTML = `<div class="row between"><p style="margin:0">${esc(pr.err)}</p><button type="button" class="ghost small" id="pp-close">OK</button></div>`; $("#pp-close").onclick = () => { pr.err = ""; renderPosterPick(); }; return; }
+  if (!pr.found) { el.innerHTML = ""; return; }
+  const by = picker()?.id || "";
+  el.innerHTML = `<div class="photo-pick"><strong>Found ${pr.found.length} ${pr.found.length === 1 ? "movie" : "movies"} on your ${pr.photos === 1 ? "photo" : "photos"}:</strong>
+    ${pr.found.map((m, i) => { const got = inPile(m.title); return `<label><input type="checkbox" data-pp="${i}" ${got ? "disabled" : "checked"}> ${esc(m.title)}${m.year ? ` <span class="mono muted">${esc(m.year)}</span>` : ""}${got ? ` <span class="muted" style="font-size:.75rem">(${got.status === "watched" ? "already watched" : "already in the pile"})</span>` : ""}</label>`; }).join("")}
+    ${pr.err ? `<p class="muted" style="margin:0;font-size:.85rem">${esc(pr.err)}</p>` : ""}
+    <div class="row"><label class="f" style="margin:0">Suggested by<select id="pp-by"><option value="">Someone</option>${crewSorted().map((c) => `<option value="${c.id}" ${c.id === by ? "selected" : ""}>${esc(c.name)}</option>`).join("")}</select></label>
+      <button type="button" class="primary small" id="pp-add">Add to the pile</button><button type="button" class="ghost small" id="pp-cancel">Cancel</button></div></div>`;
+  $("#pp-cancel").onclick = () => { Object.assign(pr, { found: null, err: "" }); renderPosterPick(); };
+  $("#pp-add").onclick = async () => {
+    const picks = [...el.querySelectorAll("[data-pp]:checked")].map((c) => pr.found[Number(c.dataset.pp)]).filter((m) => !inPile(m.title));
+    const suggestedBy = $("#pp-by").value || null;
+    Object.assign(pr, { found: null, err: "" });
+    for (const m of picks) await store.add("movies", { title: m.title, year: m.year, runtime: m.runtime, genre: m.genre, suggestedBy, votes: {}, status: "pool", createdAt: now() });
+    renderMovies();
+    toast(picks.length ? (picks.length === 1 ? `Added ${picks[0].title}` : `Added ${picks.length} movies to the pile`) : "Nothing new to add");
+  };
+}
+async function readPosterPhotos(files) {
+  if (!sampler || !files.length) return;
+  files = files.slice(0, 20);
+  const pr = posterRead; Object.assign(pr, { busy: files.length, done: 0, found: null, err: "", photos: files.length });
+  renderPosterPick();
+  const seen = new Map(); let failed = 0, firstErr = null;
+  try {
+    const lim = sampler.limits ? await sampler.limits() : { images: true };
+    if (!lim || !lim.images) throw { code: "no_images" };
+    const per = Math.min(4, (lim.images && lim.images.maxCount) || 4);
+    for (let i = 0; i < files.length; i += per) {
+      const batch = files.slice(i, i + per);
+      try {
+        const r = await sampler.json(`${batch.length === 1 ? "This photo shows" : `These ${batch.length} photos show`} movie posters, flyers, a cinema listing or DVD/Blu-ray covers. List every movie you can identify, one entry per film even if it appears on several photos. Reply with only JSON: {"movies":[{"title":"Proper full title","year":2024,"runtime":104,"genre":"Family comedy"}]}. Use the film's official English title. Give year, runtime in minutes and a short genre only if you're confident, otherwise null. Leave out TV shows, games and anything that isn't a movie.`, { images: batch, modelTier: "default" });
+        for (const m of (r && Array.isArray(r.movies) ? r.movies : [])) {
+          const raw = m && typeof m.title === "string" ? m.title.trim().slice(0, 120) : ""; if (!raw) continue;
+          const d = dataFor(raw);
+          const t = d ? d.t : raw, k = norm(t); if (!k || seen.has(k)) continue;
+          const yr = num(String(m.year || "")) || (d && d.y) || null;
+          seen.set(k, { title: t, year: d && d.y ? d.y : (yr && yr > 1880 && yr < 2100 ? yr : null), runtime: (d && d.r) || (Number(m.runtime) > 20 && Number(m.runtime) < 400 ? Math.round(Number(m.runtime)) : null), genre: typeof m.genre === "string" ? m.genre.trim().slice(0, 40) : "" });
+        }
+      } catch (e) { if (e && (e.code === "not_granted" || e.code === "no_images")) throw e; failed += batch.length; firstErr = firstErr || e; }
+      pr.done = Math.min(files.length, i + per); renderPosterPick();
+    }
+    const found = [...seen.values()];
+    if (found.length) Object.assign(pr, { found, err: failed ? `Couldn't read ${failed} of the photos.` : "" });
+    else pr.err = failed === files.length ? "Couldn't read that. Try again in a moment." : "Couldn't spot a movie on that. Try a closer, straighter shot of the poster.";
+  } catch (e) {
+    pr.err = e && e.code === "no_images" ? "Reading photos isn't available here." : e && e.code === "not_granted" ? "Reading photos needs your OK to use Claude. Reload the page to be asked again." : "Couldn't read that. Try again in a moment.";
+  }
+  pr.busy = 0; renderPosterPick();
+}
 async function lookUp(title, year) {
   const k = infoKey(title);
   if (state.info[k] || state.aboutBusy[k] || !sampler) return;
@@ -2997,6 +3060,7 @@ $("#crew-form").addEventListener("submit", async (e) => {
 });
 $("#dc-hide").addEventListener("change", (e) => { state.dcHide = e.target.checked; renderDiscover(); });
 $("#fam-only").addEventListener("change", (e) => { state.famOnly = e.target.checked; renderDiscover(); });
+$("#poster-photo").addEventListener("change", (e) => { const files = [...e.target.files]; e.target.value = ""; readPosterPhotos(files); });
 $("#m-sort").addEventListener("change", (e) => { state.sort = e.target.value; renderMovies(); });
 $("#spin").addEventListener("click", () => {
   const pool = state.movies.filter((m) => m.status === "pool");

@@ -32,6 +32,8 @@ A family planner for movie nights and weekend activities. It is a single HTML fi
 
 **Which service this month?**: a card above the pile ranks streaming services by how many unwatched films in your pile they have (films with more votes count for more), so you know which subscription to switch on.
 
+**Poster photos**: the 📷 Poster photos button at the top of the movie pile takes one or more photos (up to 20 at once) of movie posters, flyers, a cinema listing or DVD covers. Claude reads every film on them, and you tick which to add to the pile and who suggested them. Films already in the pile are greyed out, and the same film on two photos is listed once.
+
 **Movie night mode**: a 🍿 button on the Next movie night ticket opens a full-screen countdown with the poster, start time, finish time, where to watch and a get-ready checklist.
 
 **Kids' picks**: in Discover > Tonight, kids pick their name and swipe (or tap 👍/👎) through G and PG films; a yes puts the film in the pile with their vote.
