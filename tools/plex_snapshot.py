@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""Write the PLEX block in index.html from a snapshot of the family Plex library.
+"""Write the PLEX block in index.html (and plex.json) from a snapshot of the family Plex library.
 
 The page can't reach the Plex server itself (it lives on James's PC), so the
 library is copied into the page, like MOVIE_DATA. To refresh it, ask Claude in a
 session linked to that PC (it has the Plex tools) to run Plex find_media for
 each movie library (sort "title", limit 500) and once for media_type "show",
-save each result's lines into a folder as "<Library name>.txt" (shows go in
-"shows.txt"), then run:
+save each result's lines into a folder as "<Library name>.txt" (for TV, run it
+per TV library too, e.g. "Food TV.txt"; "shows.txt" is for shows of no known
+library), then run:
 
     python3 tools/plex_snapshot.py path/to/folder
 
@@ -71,7 +72,7 @@ def main(folder):
             meta = parse_meta(m["meta"])
             if meta["kind"] == "show":
                 eps = meta["eps"] or [0, 0]
-                shows.append([t, y, meta["cert"], meta["score"], meta["genres"], eps[0], eps[1]])
+                shows.append([t, y, meta["cert"], meta["score"], meta["genres"], eps[0], eps[1], "" if lib == "shows" else lib])
             else:
                 movies.append([t, y, meta["min"], meta["cert"], meta["score"], meta["genres"], lib, meta["w"]])
     movies.sort(key=lambda r: r[0].lower())
@@ -87,6 +88,8 @@ def main(folder):
             sys.exit("Couldn't find WATCH_ASOF in index.html to put the PLEX block after.")
         html = html[: anchor.end()] + "\n" + block + html[anchor.end():]
     PAGE.write_text(html, encoding="utf-8")
+    # The same copy as a file, for keyissue.app's other apps (question box, Recipe Book).
+    (ROOT / "plex.json").write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
     print(f"PLEX: {len(movies)} movies, {len(shows)} shows")
 
 
