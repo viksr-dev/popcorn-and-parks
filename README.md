@@ -34,6 +34,8 @@ A family planner for movie nights and weekend activities. It is a single HTML fi
 
 **Poster photos**: the 📷 Poster photos button at the top of the movie pile takes one or more photos (up to 20 at once) of movie posters, flyers, a cinema listing or DVD covers. Claude reads every film on them, and you tick which to add to the pile and who suggested them. Films already in the pile are greyed out, and the same film on two photos is listed once.
 
+**Our Plex**: Discover > On our Plex lists the films on the family Plex server (Comic Movies, Movies, Kung Fu), filterable by library, age group and "not seen yet", with search, sort and Pick one at random; one tap adds a film to the pile, and the ▶ button opens it in Plex. Everywhere the app says where to watch, "Our Plex" comes first when we already have the film: on Tonight (and as a "Streaming on" choice), on pile cards ("On our Plex"), in the Which service card ("already on our Plex, no subscription needed"), in Marathon and TV shows, and in movie night mode with a Play on Plex button. The Plex server is on James's PC, so the page holds a copy of the library in the `PLEX` block; to refresh it, ask Claude in a session linked to that PC to save Plex `find_media` results for each library and run `python3 tools/plex_snapshot.py <folder>` (see the script for the format).
+
 **Movie night mode**: a 🍿 button on the Next movie night ticket opens a full-screen countdown with the poster, start time, finish time, where to watch and a get-ready checklist.
 
 **Kids' picks**: in Discover > Tonight, kids pick their name and swipe (or tap 👍/👎) through G and PG films; a yes puts the film in the pile with their vote.
