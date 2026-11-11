@@ -606,6 +606,14 @@ body[data-tab="today"] #tickets { display: none; }
 .trailer-link { text-decoration: none; display: inline-flex; align-items: center; }
 .trailer-link.inline { color: var(--muted); font-size: 0.78rem; text-decoration: underline; text-underline-offset: 2px; }
 .plex-link.icon { width: 34px; min-width: 34px; height: 34px; min-height: 34px; padding: 0; flex: none; }
+.trip-add { flex: 1; min-width: 0; padding-inline: 8px; white-space: nowrap; }
+.trip-add[aria-pressed="true"] { background: #e5a00d; color: #1f1400; border-color: #e5a00d; }
+.trip-bar { position: sticky; bottom: calc(76px + env(safe-area-inset-bottom)); z-index: 5; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 10px 14px; margin: 10px 0; border-radius: 16px; background: var(--card, var(--bg)); border: 1px solid var(--line); box-shadow: 0 6px 20px rgb(0 0 0 / .12); }
+.trip-list { margin: 6px 0 0; padding-left: 1.2em; font-size: 0.85rem; }
+.hook-url { width: 100%; font: 0.8rem ui-monospace, monospace; }
+.now-row { display: flex; gap: 10px; align-items: center; flex-wrap: nowrap; }
+.now-row > span { flex: 1; min-width: 0; }
+.px-people { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin: 8px 0 16px; }
 .in-pile { font-size: 0.78rem; color: var(--muted); white-space: nowrap; display: inline-flex; gap: 4px; align-items: center; }
 .in-pile::before { content: "✓"; color: var(--parks); font-weight: 700; }
 @media (max-width: 420px) { .chart { padding-inline: 10px; } .chart-row { gap: 10px; } .chart-row .poster.sm { width: 34px; } .chart-row { grid-template-columns: 1.4em auto 1fr auto; } .chart-row.norank { grid-template-columns: auto 1fr auto; } .poster { width: 68px; } }
@@ -843,6 +851,7 @@ body[data-tab="today"] #tickets { display: none; }
     <div class="seg fam-seg" role="group" aria-label="Family sections"><button type="button" data-act="nav" data-h="crew">Family</button><button type="button" data-act="nav" data-h="history">History</button><button type="button" data-act="nav" data-h="money">Money</button><button type="button" data-act="nav" data-h="settings">Settings</button></div>
     <div class="view-head"><div><h2>What we've done</h2><p>Every movie watched and weekend outing, with your ratings.</p></div></div>
     <div id="fam-stats"></div>
+    <div id="plex-stats"></div>
     <div id="memories"></div>
     <div id="history-list"></div>
   </section>
@@ -1485,7 +1494,7 @@ const PLEX_NAME = "Our Plex";
 // Same film, different title on Plex.
 const PLEX_ALIAS = { harrypotterandthephilosophersstone: "harrypotterandthesorcerersstone" };
 // PX is the library in use: the copy above, or the live one from keyissue.app once it loads (loadLivePlex).
-let PX = PLEX, plexDeck = [];
+let PX = PLEX, plexDeck = [], plexNow = [], plexSeen = {};
 function buildPlexIdx(data) {
   const idx = new Map();
   const put = (k, v) => { if (!idx.has(k)) idx.set(k, []); idx.get(k).push(v); };
@@ -1503,9 +1512,27 @@ async function loadLivePlex() {
     const d = await res.json();
     if (!Array.isArray(d.m) || !d.m.length) return;
     PX = d; PLEX_IDX = buildPlexIdx(d); plexDeck = Array.isArray(d.onDeck) ? d.onDeck : [];
+    plexNow = Array.isArray(d.now) ? d.now : []; plexSeen = d.seenBy && typeof d.seenBy === "object" ? d.seenBy : {};
     render();
   } catch {}
 }
+// What's on the TV now (Plex webhooks): checked every minute while the page is open, redrawn only when it changes.
+async function pollPlexNow() {
+  if (document.hidden || !/(^|\.)keyissue\.app$/.test(location.hostname)) return;
+  try {
+    const res = await fetch("/_kia/dashboard", { credentials: "same-origin", headers: { Accept: "application/json" } });
+    if (!res.ok) return;
+    const d = await res.json(), list = Array.isArray(d.now) ? d.now : [];
+    const sig = (l) => JSON.stringify(l.map((x) => [x.title, x.episode, x.state, x.player]));
+    const changed = sig(list) !== sig(plexNow);
+    plexNow = list;
+    if (changed && document.body.dataset.tab === "today") renderToday();
+  } catch {}
+}
+// Plex accounts (Plex Home profiles) that match a family member by first name.
+const firstWord = (t) => String(t || "").trim().split(/\s+/)[0].toLowerCase();
+const plexAccountFor = (crewId) => { const c = crewById(crewId); return c ? Object.keys(plexSeen).find((a) => firstWord(a) === firstWord(c.name)) : null; };
+const seenOnPlexBy = (account, title) => !!account && (plexSeen[account] || []).includes(norm(title));
 // The Plex copy of a title, if we have one. Year is matched loosely (release dates differ by a year between sources).
 function onPlex(title, year, kind) {
   const k = norm(title);
@@ -1523,11 +1550,17 @@ const plexUrl = (title, year) => {
 const plexLink = (title, year, label = "Play on Plex") => `<a class="plex-link" href="${esc(plexUrl(title, year))}" target="_blank" rel="noopener">${ICON_PLAY_PX}${esc(label)}</a>`;
 // Trailers: a YouTube search for the official trailer (opens the YouTube app on phones).
 const trailerUrl = (title, year) => `https://www.youtube.com/results?search_query=${encodeURIComponent(`${title} ${year || ""} official trailer`.replace(/\s+/g, " ").trim())}`;
-const trailerLink = (title, year, cls = "ghost small") => `<a class="trailer-link ${cls}" href="${esc(trailerUrl(title, year))}" target="_blank" rel="noopener" aria-label="Watch the trailer for ${esc(title)}">▶ Trailer</a>`;
+// With Plex linked, films we own play their trailer inside Plex (Plex Pass extras); YouTube is the fallback.
+const trailerLink = (title, year, cls = "ghost small") => { const x = PX.live && onPlex(title, year, "movie"); return `<a class="trailer-link ${cls}" href="${esc(trailerUrl(title, year))}" target="_blank" rel="noopener"${x && x.key ? ` data-pxtrailer="${esc(x.key)}"` : ""} aria-label="Watch the trailer for ${esc(title)}">▶ Trailer</a>`; };
 const ICON_PLAY_PX = `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4v16l13-8z"/></svg>`;
 const PLEX_LIBS = () => [...new Set((PX.m || []).map((r) => r[6]))];
 const PLEX_SORTS = [["rating", "Best rated"], ["new", "Newest"], ["short", "Shortest"], ["title", "A to Z"]];
-const plexView = { lib: "all", aud: "any", fresh: false, sort: "rating", q: "", n: 24 };
+const plexView = { lib: "all", aud: "any", fresh: false, sort: "rating", q: "", n: 24, who: "", trip: false };
+// Road trip pack: films picked for the car, kept on this device.
+const TRIP_KEY = "pp-roadtrip";
+let trip = []; try { trip = JSON.parse(localStorage.getItem(TRIP_KEY) || "[]"); if (!Array.isArray(trip)) trip = []; } catch { trip = []; }
+const saveTrip = () => { try { localStorage.setItem(TRIP_KEY, JSON.stringify(trip)); } catch {} };
+const inTrip = (x) => trip.some((f) => f.t === x.t && f.y === x.y);
 const plexKids = (x) => x.c === "G" || x.c === "PG";
 const plexAdult = (x) => x.c === "PG-13" || x.c === "R" || x.c === "NC-17";
 function plexList() {
@@ -1536,6 +1569,7 @@ function plexList() {
     && (plexView.lib === "all" || x.lib === plexView.lib)
     && (plexView.aud === "any" || (plexView.aud === "kids" ? plexKids(x) : plexAdult(x)))
     && (!plexView.fresh || (x.w !== 1 && inPile(x.t)?.status !== "watched"))
+    && (!plexView.who || !seenOnPlexBy(plexView.who, x.t))
     && (!q || norm(x.t).includes(q))
     && x.r >= 40); // leave out shorts and extras
   const by = { rating: (a, b) => b.v - a.v, new: (a, b) => b.y - a.y || b.v - a.v, short: (a, b) => a.r - b.r, title: (a, b) => a.t.localeCompare(b.t) };
@@ -1551,8 +1585,28 @@ function plexTile(x) {
     <div class="tt">${esc(x.t)}</div>
     <div class="sub"><span class="mono">${esc([x.y, x.r ? x.r + "m" : ""].filter(Boolean).join(" · "))}</span>${x.c ? `<span class="cert ${plexKids(x) ? "fam" : ""}">${esc(x.c)}</span>` : ""}</div>
     <div class="sub">${[esc(String(x.g || "").split("/").slice(0, 2).join(" · ")), trailerLink(x.t, x.y, "inline")].filter(Boolean).join(" · ")}</div>
-    <div class="acts">${add}<a class="plex-link icon" href="${esc(plexUrl(x.t, x.y))}" target="_blank" rel="noopener" aria-label="Play ${esc(x.t)} on Plex" title="Play on Plex">${ICON_PLAY_PX}</a></div>
+    <div class="acts">${plexView.trip ? `<button type="button" class="small trip-add" data-act="px-trip" data-t="${esc(x.t)}" data-y="${esc(x.y || "")}" data-r="${esc(x.r || "")}" aria-pressed="${inTrip(x)}">${inTrip(x) ? "✓ Packed" : "Pack"}</button>` : add}<a class="plex-link icon" href="${esc(plexUrl(x.t, x.y))}" target="_blank" rel="noopener" aria-label="Play ${esc(x.t)} on Plex" title="Play on Plex">${ICON_PLAY_PX}</a></div>
   </div>`;
+}
+function tripBar() {
+  const mins = trip.reduce((a, f) => a + (Number(f.r) || 0), 0);
+  return `<div class="trip-bar"><div><strong>${trip.length ? `${trip.length} ${trip.length === 1 ? "film" : "films"} · ${hm(mins)}` : "Tap 🚗 Pack on films for the car"}</strong>
+      ${trip.length ? `<ol class="trip-list">${trip.map((f) => `<li>${esc(f.t)}${f.y ? ` <span class="mono muted">${esc(f.y)}</span>` : ""}</li>`).join("")}</ol>` : ""}</div>
+    <div class="row">${trip.length ? `${PX.live ? `<button type="button" class="small primary" data-act="px-trip-save">Make the playlist on Plex</button>` : ""}<button type="button" class="small ghost" data-act="px-trip-clear">Clear</button>` : ""}</div>
+    <p class="source" style="flex-basis:100%">${PX.live ? `"Make the playlist" puts these in a Plex playlist called "Road trip". In the Plex app on each tablet, open Playlists, then Road trip, and tap Download (Plex Pass) while you're on home wifi.` : `In the Plex app on each tablet, find each film and tap Download (Plex Pass) while you're on home wifi. Once Plex is linked to keyissue.app, this can make a "Road trip" playlist to download in one go.`}</p></div>`;
+}
+let plexHook = null;
+function plexSetup() {
+  if (state.readOnly || !/(^|\.)keyissue\.app$/.test(location.hostname)) return "";
+  const h = plexHook;
+  return `<details class="grp" style="margin-top:14px"${h ? " open" : ""}><summary><strong>Plex Pass: movie night on autopilot</strong></summary>
+    <p class="source">Plex tells this app when something plays. Then the picked film starting on the TV sends everyone a "Movie night's starting" note, finishing it marks it watched and passes the pick on, and the home page shows what's on now. It also learns who watched what, so you can hide films a child has already seen.</p>
+    ${h ? `<input class="hook-url" readonly value="${esc(h.url)}" aria-label="Webhook address" onclick="this.select()">
+      <div class="row" style="margin:8px 0"><button type="button" class="small primary" data-act="px-hook-copy">Copy the address</button></div>
+      <ol class="source" style="padding-left:1.2em"><li>On the computer with Plex, open <a href="https://app.plex.tv/desktop/#!/settings/webhooks" target="_blank" rel="noopener">Plex Settings › Webhooks</a> (signed in as the owner).</li><li>Click Add Webhook, paste the address, then Save Changes.</li><li>Play anything for a few seconds and come back here.</li></ol>
+      <p class="source">${h.lastCall ? `✓ Plex last called ${esc(new Date(h.lastCall).toLocaleString())}.` : "Plex hasn't called yet."} Keep this address to yourself; anyone with it could pretend to be the Plex server.</p>`
+      : `<button type="button" class="small" data-act="px-hook">Set it up</button>`}
+  </details>`;
 }
 function renderPlex() {
   const el = $("#plex"); if (!el) return;
@@ -1563,12 +1617,15 @@ function renderPlex() {
       <div class="grp"><span class="label">Library</span><div class="chips" role="group" aria-label="Plex library">${chip("px-lib", "all", plexView.lib, "All movies")}${libs.map((l) => chip("px-lib", l, plexView.lib, l)).join("")}</div></div>
       <div class="grp"><span class="label">Who's it for?</span><div class="chips" role="group" aria-label="Age rating">${chip("px-aud", "any", plexView.aud, "Anyone")}${chip("px-aud", "kids", plexView.aud, "Kids (G & PG)")}${chip("px-aud", "adult", plexView.aud, "Grown-ups (PG-13 and up)")}</div></div>
       <div class="grp"><span class="label">Sort</span><div class="chips" role="group" aria-label="Sort">${PLEX_SORTS.map(([k, l]) => chip("px-sort", k, plexView.sort, l)).join("")}</div></div>
+      ${Object.keys(plexSeen).length ? `<div class="grp"><span class="label">Hide what they've seen</span><div class="chips" role="group" aria-label="Hide films this person has watched on Plex">${chip("px-who", "", plexView.who, "Nobody")}${Object.keys(plexSeen).sort().map((a) => chip("px-who", a, plexView.who, a)).join("")}</div></div>` : ""}
       <div class="row"><input type="search" id="px-q" placeholder="Search our Plex" value="${esc(plexView.q)}" aria-label="Search our Plex" style="flex:1;min-width:0"><label class="check" style="margin:0"><input type="checkbox" id="px-fresh" ${plexView.fresh ? "checked" : ""}> Not seen yet</label></div>
     </div>
-    <div class="row between"><p class="source" style="margin:0">${list.length} ${list.length === 1 ? "film" : "films"} on our Plex</p>${list.length && !state.readOnly ? `<button type="button" class="small" data-act="px-random">Pick one at random</button>` : ""}</div>
+    <div class="row between"><p class="source" style="margin:0">${list.length} ${list.length === 1 ? "film" : "films"} on our Plex</p><div class="row">${list.length && !state.readOnly && !plexView.trip ? `<button type="button" class="small" data-act="px-random">Pick one at random</button>` : ""}<button type="button" class="small" data-act="px-tripmode" aria-pressed="${plexView.trip}">🚗 Road trip pack</button></div></div>
+    ${plexView.trip ? tripBar() : ""}
     ${list.length ? `<div class="pgrid">${list.slice(0, plexView.n).map(plexTile).join("")}</div>${list.length > plexView.n ? `<div class="refresh-row"><button type="button" class="ghost small" data-act="px-more">Show more</button></div>` : ""}`
       : `<div class="empty"><p>Nothing on our Plex fits that. Try another library or age group.</p></div>`}
-    <p class="source">${PX.live ? `Live from the family Plex server${PX.stale ? " (last time it answered)" : ""}. The unwatched films in the pile are also a "Movie night pile" playlist on Plex, and "We watched it" marks a film watched there too.` : `From the family Plex server, copied ${esc(fmtDate(PX.asof) || "recently")}. New films show up here after the next refresh.`} ▶ opens the film in Plex so you can play it on the TV.</p>`;
+    <p class="source">${PX.live ? `Live from the family Plex server${PX.stale ? " (last time it answered)" : ""}. The unwatched films in the pile are also a "Movie night pile" playlist on Plex, and "We watched it" marks a film watched there too.` : `From the family Plex server, copied ${esc(fmtDate(PX.asof) || "recently")}. New films show up here after the next refresh.`} ▶ opens the film in Plex so you can play it on the TV.</p>
+    ${plexSetup()}`;
   const qi = $("#px-q"); qi.oninput = (e) => { plexView.q = e.target.value; plexView.n = 24; const pos = e.target.selectionStart; renderPlex(); const n = $("#px-q"); n.focus(); n.setSelectionRange(pos, pos); };
   $("#px-fresh").onchange = (e) => { plexView.fresh = e.target.checked; plexView.n = 24; renderPlex(); };
 }
@@ -1579,6 +1636,33 @@ document.addEventListener("click", (e) => {
     case "px-aud": plexView.aud = b.dataset.v; break;
     case "px-sort": plexView.sort = b.dataset.v; break;
     case "px-more": plexView.n += 24; renderPlex(); return;
+    case "px-rate": {
+      const n = Number(b.dataset.n), m = state.movies.find((x) => x.id === b.dataset.id); if (!m || !n) return;
+      if (n === 5) confetti();
+      store.update(`movies/${m.id}`, { rating: n }).then(() => toast(`Thanks! ${m.title} gets ${n} ★`), () => toast("Couldn't save that, try again"));
+      return;
+    }
+    case "px-who": plexView.who = b.dataset.v; break;
+    case "px-tripmode": plexView.trip = !plexView.trip; break;
+    case "px-trip": {
+      const f = { t: b.dataset.t, y: Number(b.dataset.y) || 0, r: Number(b.dataset.r) || 0 };
+      trip = inTrip(f) ? trip.filter((x) => !(x.t === f.t && x.y === f.y)) : [...trip, f].slice(0, 30);
+      saveTrip(); renderPlex(); return;
+    }
+    case "px-trip-clear": trip = []; saveTrip(); renderPlex(); return;
+    case "px-trip-save": {
+      b.disabled = true;
+      fetch("/_kia/plex/playlist", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ films: trip.map((f) => ({ title: f.t, year: f.y })) }) })
+        .then((r) => r.ok ? r.json() : Promise.reject()).then((d) => toast(`"Road trip" playlist is on Plex with ${d.films} ${d.films === 1 ? "film" : "films"} 🚗`))
+        .catch(() => toast("Couldn't reach Plex just now")).finally(() => { b.disabled = false; });
+      return;
+    }
+    case "px-hook": {
+      fetch("/_kia/plex/hook", { credentials: "same-origin", headers: { Accept: "application/json" } }).then((r) => r.ok ? r.json() : Promise.reject())
+        .then((d) => { plexHook = d; renderPlex(); }).catch(() => toast("Couldn't load that just now"));
+      return;
+    }
+    case "px-hook-copy": navigator.clipboard?.writeText(plexHook?.url || "").then(() => toast("Copied. Paste it into Plex › Webhooks"), () => toast("Couldn't copy. Select the address and copy it")); return;
     case "px-random": {
       const pool = plexList().filter((x) => !inPile(x.t));
       if (!pool.length) return;
@@ -1588,6 +1672,15 @@ document.addEventListener("click", (e) => {
     default: return;
   }
   plexView.n = 24; renderPlex();
+});
+// Trailer links for films we own on Plex: try the film's own trailer in Plex first, YouTube if it has none.
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-pxtrailer]"); if (!b) return;
+  e.preventDefault();
+  const yt = b.href, w = window.open("", "_blank");
+  const go = (u) => { if (w) w.location = u; else location.href = u; };
+  fetch(`/_kia/plex/trailer?key=${encodeURIComponent(b.dataset.pxtrailer)}`, { credentials: "same-origin" }).then((r) => r.ok ? r.json() : Promise.reject())
+    .then((d) => go(d.url)).catch(() => go(yt));
 });
 const PNAME = { "Disney Plus": "Disney+", "Amazon Prime Video": "Prime Video", "Netflix Kids": "Netflix", "Apple TV Store": "Apple TV", "Amazon Video": "Prime Video Store", "Google Play Movies": "Google Play", "Neon TV": "Neon" };
 const pname = (n) => PNAME[n] || n;
@@ -1986,7 +2079,8 @@ function openMovieNight() { $("#movienight")?.remove(); const el = document.crea
 const kp = { who: null, idx: 0 };
 function kidQueue() {
   const watched = watchedKeys();
-  return Object.values(MOVIE_DATA).filter((d) => kidSafe(d) && !watched.has(norm(d.t)) && !(inPile(d.t)?.votes || {})[kp.who] && !skipped.has("kp:" + kp.who + ":" + norm(d.t)))
+  const acct = plexAccountFor(kp.who);
+  return Object.values(MOVIE_DATA).filter((d) => kidSafe(d) && !watched.has(norm(d.t)) && !seenOnPlexBy(acct, d.t) && !(inPile(d.t)?.votes || {})[kp.who] && !skipped.has("kp:" + kp.who + ":" + norm(d.t)))
     .sort((a, b) => (b.v || 0) - (a.v || 0));
 }
 function renderKids() {
@@ -2067,6 +2161,24 @@ function renderStats() {
     <div class="mstat"><b>${done.length}</b><span>weekend outings done</span></div>
     <div class="mstat"><b>${dcSeen} / ${DC_ANIMATED.length}</b><span>DC animated films seen</span></div>
   </div>`;
+}
+
+/* ---------- Who watched what on Plex (History tab), from Plex's webhooks ---------- */
+let plexStats = null, plexStatsAt = 0;
+function renderPlexStats() {
+  const el = $("#plex-stats"); if (!el) return;
+  if (!/(^|\.)keyissue\.app$/.test(location.hostname)) return;
+  if (Date.now() - plexStatsAt > 5 * 60e3) {
+    plexStatsAt = Date.now();
+    fetch("/_kia/plex/stats", { credentials: "same-origin", headers: { Accept: "application/json" } }).then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (d) { plexStats = d; renderPlexStats(); } }).catch(() => {});
+  }
+  const d = plexStats;
+  if (!d || !d.total) { el.innerHTML = ""; return; }
+  el.innerHTML = `<h3 style="margin:18px 0 4px">On our Plex</h3><p class="source">Everything watched to the end on Plex since ${esc(fmtDate(new Date(d.since).toISOString().slice(0, 10)))}, by Plex profile.</p>
+    <div class="px-people">${d.people.map((p) => `<div class="mstat"><b>${esc(p.name)}</b><span>${hm(p.minutes)} in all${p.monthMinutes ? ` · ${hm(p.monthMinutes)} this month` : ""}<br>${p.films} ${p.films === 1 ? "film" : "films"} · ${p.episodes} ${p.episodes === 1 ? "episode" : "episodes"}${p.last ? `<br>Last: ${esc(p.last)}` : ""}</span></div>`).join("")}</div>
+    ${d.topShows.length ? `<p class="source"><strong>Most watched shows:</strong> ${d.topShows.map((x) => `${esc(x.title)} (${x.count})`).join(", ")}</p>` : ""}
+    ${d.topFilms.length ? `<p class="source"><strong>Films watched most:</strong> ${d.topFilms.map((x) => `${esc(x.title)}${x.count > 1 ? ` (${x.count}×)` : ""}`).join(", ")}</p>` : ""}`;
 }
 
 /* ---------- Phone: More choices toggles ---------- */
@@ -3075,6 +3187,9 @@ function renderToday() {
   if (up) { const c = up.d.crewId && crewById(up.d.crewId); cards.push(`<div class="tcard hot"><span class="ic">${up.d.kind === "birthday" ? "🎂" : up.d.kind === "anniversary" ? "💞" : "🎉"}</span><div class="what"><strong>${esc(up.d.name)}${up.d.kind === "birthday" ? "'s birthday" : ""} ${up.n === 0 ? "is today! 🎉" : `in ${up.n} day${up.n > 1 ? "s" : ""}`}</strong><div class="row">${c && !state.readOnly ? `<button type="button" class="small primary" data-act="sd-pick" data-who="${c.id}">Let ${esc(c.name)} pick</button>` : ""}<a class="small" href="#weekend" data-act="sd-ideas">Outing ideas</a></div></div></div>`); }
   if (next) { const d = WATCH_INFO[norm(next.title)] || {}; cards.push(`<div class="tcard">${poster(next.title)}<div class="what"><span class="label">Next movie night</span><strong>${esc(next.title)}</strong><span class="source">${esc(fmtDate(next.night) || "Date to be set")} · ${esc(mn.time)}${next.pickedBy && crewById(next.pickedBy) ? ` · ${esc(crewById(next.pickedBy).name)}'s pick` : ""}</span>${d.t ? whereLine(d) : ""}<div class="row"><button type="button" class="small primary" data-act="mn-open">🍿 Movie night mode</button></div></div></div>`); }
   else cards.push(`<div class="tcard"><span class="ic">🎬</span><div class="what"><span class="label">Movie night</span><strong>${p ? `${esc(p.name)}'s turn to pick` : "Nothing booked yet"}</strong><div class="row"><a class="small primary" href="#movies">Choose from the pile</a><button type="button" class="small" data-act="t-surprise">🎲 Surprise us</button></div></div></div>`);
+  const rateMe = state.movies.filter((m) => m.status === "watched" && m.plexWatched && !m.rating && (Date.now() - new Date((m.watchedOn || "2000-01-01") + "T12:00:00")) < 8 * 864e5);
+  if (!state.readOnly) rateMe.slice(0, 2).forEach((m) => cards.push(`<div class="tcard hot">${poster(m.title)}<div class="what"><span class="label">Watched on Plex</span><strong>How was ${esc(m.title)}?</strong><span class="stars" role="group" aria-label="Rating">${[1, 2, 3, 4, 5].map((n) => `<button type="button" data-act="px-rate" data-id="${m.id}" data-n="${n}" aria-label="${n} star${n > 1 ? "s" : ""}">★</button>`).join("")}</span></div></div>`));
+  if (plexNow.length) cards.push(`<div class="tcard"><span class="ic">📺</span><div class="what"><span class="label">On the TV now</span>${plexNow.slice(0, 3).map((x) => `<div class="now-row"><span><strong>${esc(x.kind === "episode" && x.show ? x.show : x.title)}</strong>${x.episode ? ` <span class="source">${esc(x.episode)}</span>` : ""} <span class="source">· ${esc(x.player)}${x.account ? `, ${esc(x.account)}` : ""}</span></span><span class="source">${x.state === "paused" ? "⏸ Paused" : x.left ? `${esc(x.left)} min left` : "▶ On now"}</span></div>`).join("")}</div></div>`);
   if (plexDeck.length) cards.push(`<div class="tcard"><span class="ic">▶️</span><div class="what"><span class="label">Carry on watching on Plex</span>${plexDeck.slice(0, 3).map((x) => `<div class="row between" style="flex-wrap:nowrap;gap:10px"><span style="flex:1;min-width:0"><strong>${esc(x.title)}</strong>${x.episode ? ` <span class="source">${esc(x.episode)}</span>` : ""}${x.left ? ` <span class="source">· ${esc(x.left)} min left</span>` : ""}</span>${x.key && PX.mid ? `<a class="plex-link icon" href="${esc(`https://app.plex.tv/desktop/#!/server/${encodeURIComponent(PX.mid)}/details?key=${encodeURIComponent("/library/metadata/" + x.key)}`)}" target="_blank" rel="noopener" aria-label="Carry on with ${esc(x.title)} on Plex">${ICON_PLAY_PX}</a>` : ""}</div>`).join("")}</div></div>`);
   const soon = state.acts.filter((a) => a.status === "planned" && a.plannedFor && (new Date(a.plannedFor + "T12:00:00") - Date.now()) < 8 * 864e5).sort((a, b) => a.plannedFor.localeCompare(b.plannedFor));
   if (soon.length) cards.push(`<div class="tcard"><span class="ic">🏞️</span><div class="what"><span class="label">Coming up</span>${soon.slice(0, 3).map((a) => `<div><strong>${esc(a.name)}</strong> <span class="source">${esc(fmtDate(a.plannedFor))}</span></div>`).join("")}<div class="row"><a class="small" href="#weekend">See weekend plans</a></div></div></div>`);
@@ -3125,7 +3240,7 @@ const TAB_RENDER = {
   discover: () => { renderDiscover(); renderTonight(); renderTV(); renderMarathon(); },
   games: () => renderGames(),
   crew: () => { renderCrew(); renderBadges(); renderRewards(); renderSpecial(); renderSubs(); renderBudget(); renderConnections(); },
-  history: () => { renderStats(); renderMemories(); renderHistory(); },
+  history: () => { renderStats(); renderPlexStats(); renderMemories(); renderHistory(); },
   today: () => renderToday(),
 };
 TAB_RENDER.money = TAB_RENDER.settings = () => { renderSubs(); renderBudget(); renderDisplay(); renderConnections(); renderBackup(); };
@@ -3329,6 +3444,8 @@ $("#theme-btn").addEventListener("click", () => { const t = document.documentEle
   maybeTour();
   render();
   loadLivePlex();
+  pollPlexNow(); setInterval(pollPlexNow, 60000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) pollPlexNow(); });
   store.watch("points", (d) => { state.points = {}; d.forEach((x) => (state.points[x.id] = x.n || 0)); renderBadges(); }, () => {});
   store.watch("themes", (d) => { state.themes = {}; d.forEach(({ id, ...v }) => (state.themes[id] = v)); if ($("#movienight")) renderMovieNight(); }, () => {});
   store.watch("live", (d) => { const s = d.find((x) => x.id === "session"); state.live = s || null; state.liveVotes = {}; d.filter((x) => x.id !== "session").forEach(({ id, ...v }) => (state.liveVotes[id] = v)); renderLiveBanner(); if ($("#livevote")) renderLive(); }, () => {});
