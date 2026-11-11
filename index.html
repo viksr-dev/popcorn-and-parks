@@ -606,8 +606,11 @@ body[data-tab="today"] #tickets { display: none; }
 .trailer-link { text-decoration: none; display: inline-flex; align-items: center; }
 .trailer-link.inline { color: var(--muted); font-size: 0.78rem; text-decoration: underline; text-underline-offset: 2px; }
 .plex-link.icon { width: 34px; min-width: 34px; height: 34px; min-height: 34px; padding: 0; flex: none; }
-.overlay .trailer-box { max-width: 860px; }
-#trailer video { width: 100%; max-height: 70vh; border-radius: 14px; background: #000; box-shadow: 0 30px 80px -20px rgb(0 0 0 / 0.8); }
+.trailer-box { display: grid; gap: 8px; padding: 12px; margin: 8px 0; border-radius: 16px; background: #0b0f1e; color: #fff; border: 1px solid rgb(255 255 255 / 0.12); box-shadow: 0 14px 30px -18px rgb(0 0 0 / 0.8); min-width: 0; }
+.trailer-box .ghost { color: #fff; border-color: rgb(255 255 255 / 0.3); }
+.trailer-box video { width: 100%; max-height: 60vh; border-radius: 10px; background: #000; }
+.pgrid > .trailer-box { grid-column: 1 / -1; margin: 0; }
+.card > .full .trailer-box, .card .trailer-box { grid-column: 1 / -1; }
 .trip-add { flex: 1; min-width: 0; padding-inline: 8px; white-space: nowrap; }
 .trip-add[aria-pressed="true"] { background: #e5a00d; color: #1f1400; border-color: #e5a00d; }
 .trip-bar { position: sticky; bottom: calc(76px + env(safe-area-inset-bottom)); z-index: 5; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 10px 14px; margin: 10px 0; border-radius: 16px; background: var(--card, var(--bg)); border: 1px solid var(--line); box-shadow: 0 6px 20px rgb(0 0 0 / .12); }
@@ -1675,26 +1678,31 @@ document.addEventListener("click", (e) => {
   }
   plexView.n = 24; renderPlex();
 });
-// Trailer links for films we own on Plex: the film's own trailer plays here in a pop-up player
-// (the video comes from our Plex through keyissue.app). No trailer on Plex, or it won't play: YouTube.
-function closeTrailer() { const el = $("#trailer"); if (!el) return; el.querySelector("video")?.pause(); el.remove(); }
+// Trailer links for films we own on Plex: the film's own trailer plays right underneath it, in a player
+// box (the video comes from our Plex through keyissue.app). No trailer on Plex, or it won't play: YouTube.
+let trailerFor = null;
+function closeTrailer() { const el = $("#trailer"); if (el) { el.querySelector("video")?.pause(); el.remove(); } trailerFor = null; }
 document.addEventListener("click", (e) => {
-  if (e.target.closest("[data-act=tr-close]") || e.target.id === "trailer") { closeTrailer(); return; }
+  if (e.target.closest("[data-act=tr-close]")) { closeTrailer(); return; }
   const b = e.target.closest("[data-pxtrailer]"); if (!b) return;
   e.preventDefault();
-  const yt = b.href, title = (b.getAttribute("aria-label") || "Trailer").replace(/^Watch the trailer for /, "");
-  closeTrailer();
-  const el = document.createElement("div"); el.id = "trailer"; el.className = "overlay"; el.setAttribute("role", "dialog"); el.setAttribute("aria-label", "Trailer");
-  const fallback = (why) => { const box = el.querySelector(".box"); if (box) box.innerHTML = `<span class="label">Trailer</span><h2>${esc(title)}</h2><p>${esc(why)}</p><div class="row" style="justify-content:center"><a class="small primary" href="${esc(yt)}" target="_blank" rel="noopener" data-act="tr-close">▶ Watch on YouTube</a></div>`; };
-  el.innerHTML = `<button type="button" class="x" data-act="tr-close" aria-label="Close">✕</button><div class="box trailer-box"><span class="label">Trailer</span><h2>${esc(title)}</h2><p>Finding the trailer on Plex…</p></div>`;
-  document.body.appendChild(el);
-  fetch(`/_kia/plex/trailer?key=${encodeURIComponent(b.dataset.pxtrailer)}`, { credentials: "same-origin" }).then((r) => r.ok ? r.json() : Promise.reject())
+  const key = b.dataset.pxtrailer, yt = b.href, title = (b.getAttribute("aria-label") || "Trailer").replace(/^Watch the trailer for /, "");
+  const again = trailerFor === key; // tapping the same Trailer again closes it
+  closeTrailer(); if (again) return;
+  trailerFor = key;
+  const anchor = b.closest(".ptile") || b.closest(".row") || b.parentElement;
+  const el = document.createElement("div"); el.id = "trailer"; el.className = "trailer-box"; el.setAttribute("role", "region"); el.setAttribute("aria-label", `Trailer for ${title}`);
+  const body = (html) => { el.innerHTML = `<div class="row between"><strong>▶ ${esc(title)}</strong><button type="button" class="ghost small" data-act="tr-close" aria-label="Close trailer">✕ Close</button></div>${html}`; };
+  const fallback = (why) => body(`<p class="source" style="color:inherit">${esc(why)}</p><div class="row"><a class="small primary" href="${esc(yt)}" target="_blank" rel="noopener">▶ Watch on YouTube</a></div>`);
+  body(`<p class="source" style="color:inherit">Finding the trailer on Plex…</p>`);
+  anchor.after(el);
+  el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  fetch(`/_kia/plex/trailer?key=${encodeURIComponent(key)}`, { credentials: "same-origin" }).then((r) => r.ok ? r.json() : Promise.reject())
     .then((d) => {
       if (!el.isConnected) return;
       if (!d.video) throw 0;
-      const box = el.querySelector(".box");
-      box.innerHTML = `<span class="label">Trailer · from our Plex</span><h2>${esc(title)}</h2><video controls autoplay playsinline preload="auto"></video><div class="row" style="justify-content:center"><a class="small ghost" href="${esc(yt)}" target="_blank" rel="noopener" style="color:#fff">Or watch on YouTube</a></div>`;
-      const v = box.querySelector("video");
+      body(`<video controls autoplay playsinline preload="auto"></video><p class="source" style="color:inherit">From our Plex · <a href="${esc(yt)}" target="_blank" rel="noopener" style="color:inherit">watch on YouTube instead</a></p>`);
+      const v = el.querySelector("video");
       v.onerror = () => fallback("This trailer won't play here.");
       v.src = d.video;
       v.play?.().catch(() => {});
@@ -3277,14 +3285,14 @@ function route() {
   document.body.dataset.tab = hash === "money" || hash === "settings" ? "crew" : hash;
   document.body.dataset.sub = hash;
   // Switching tabs (or the phone's back button) closes any full-screen pop-up.
-  ["reveal", "quiz", "livevote", "kidpicks", "movienight", "trailer"].forEach((id) => document.getElementById(id)?.remove());
+  ["reveal", "quiz", "livevote", "kidpicks", "movienight"].forEach((id) => document.getElementById(id)?.remove());
   const view = ROUTES[hash], navTab = view === "history" ? "crew" : view;
   document.querySelectorAll("section.view").forEach((s) => (s.hidden = s.id !== "view-" + view));
   document.querySelectorAll("nav.tabs a").forEach((a) => (a.dataset.tab === navTab ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current")));
   document.querySelectorAll("#view-crew [data-sub]").forEach((el) => (el.hidden = el.dataset.sub !== hash));
   document.querySelectorAll(".fam-seg [data-act=nav]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.h === hash));
 }
-window.addEventListener("hashchange", () => { route(); render(); window.scrollTo(0, 0); });
+window.addEventListener("hashchange", () => { closeTrailer(); route(); render(); window.scrollTo(0, 0); });
 
 /* ---------- Actions ---------- */
 const now = () => Date.now();
