@@ -610,6 +610,18 @@ body[data-tab="today"] #tickets { display: none; }
 .trailer-box .ghost { color: #fff; border-color: rgb(255 255 255 / 0.3); }
 .trailer-box video { width: 100%; max-height: 60vh; border-radius: 10px; background: #000; }
 .pgrid > .trailer-box { grid-column: 1 / -1; margin: 0; }
+.film-box { display: grid; gap: 8px; padding: 12px; margin: 8px 0; border-radius: 16px; background: #0b0f1e; color: #fff; border: 1px solid rgb(255 255 255 / 0.12); min-width: 0; text-align: left; }
+.film-box video { width: 100%; max-height: 70vh; border-radius: 10px; background: #000; }
+.film-box .ghost { color: #fff; border-color: rgb(255 255 255 / 0.3); }
+.pgrid > .film-box { grid-column: 1 / -1; margin: 0; }
+.bed { display: grid; gap: 6px; width: 100%; background: rgb(255 255 255 / 0.06); border-radius: 14px; padding: 12px 14px; }
+.bed .chips { justify-content: center; }
+.bed .chip { color: #fff; border-color: rgb(255 255 255 / 0.3); }
+.bed .chip[aria-pressed=true] { background: #ffd36b; color: #1b1405; }
+.recap .big { font-size: 2.4rem; font-weight: 800; line-height: 1.1; color: #ffd36b; }
+.recap .sec { display: grid; gap: 4px; width: 100%; background: rgb(255 255 255 / 0.06); border-radius: 14px; padding: 12px 14px; }
+.recap .sec p { margin: 0; color: rgb(255 255 255 / .85); }
+.recap .poster { width: min(140px, 40vw); }
 .card > .full .trailer-box, .card .trailer-box { grid-column: 1 / -1; }
 .trip-add { flex: 1; min-width: 0; padding-inline: 8px; white-space: nowrap; }
 .trip-add[aria-pressed="true"] { background: #e5a00d; color: #1f1400; border-color: #e5a00d; }
@@ -1558,9 +1570,9 @@ const trailerUrl = (title, year) => `https://www.youtube.com/results?search_quer
 // With Plex linked, films we own play their trailer inside Plex (Plex Pass extras); YouTube is the fallback.
 const trailerLink = (title, year, cls = "ghost small") => { const x = PX.live && onPlex(title, year, "movie"); return `<a class="trailer-link ${cls}" href="${esc(trailerUrl(title, year))}" target="_blank" rel="noopener"${x && x.key ? ` data-pxtrailer="${esc(x.key)}"` : ""} aria-label="Watch the trailer for ${esc(title)}">▶ Trailer</a>`; };
 const ICON_PLAY_PX = `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4v16l13-8z"/></svg>`;
-const PLEX_LIBS = () => [...new Set((PX.m || []).map((r) => r[6]))];
+const PLEX_LIBS = () => [...new Set(plexView.kind === "shows" ? (PX.s || []).map((r) => r[7]).filter(Boolean) : (PX.m || []).map((r) => r[6]))];
 const PLEX_SORTS = [["rating", "Best rated"], ["new", "Newest"], ["short", "Shortest"], ["title", "A to Z"]];
-const plexView = { lib: "all", aud: "any", fresh: false, sort: "rating", q: "", n: 24, who: "", trip: false };
+const plexView = { kind: "films", lib: "all", aud: "any", fresh: false, sort: "rating", q: "", n: 24, who: "", trip: false };
 // Road trip pack: films picked for the car, kept on this device.
 const TRIP_KEY = "pp-roadtrip";
 let trip = []; try { trip = JSON.parse(localStorage.getItem(TRIP_KEY) || "[]"); if (!Array.isArray(trip)) trip = []; } catch { trip = []; }
@@ -1568,6 +1580,30 @@ const saveTrip = () => { try { localStorage.setItem(TRIP_KEY, JSON.stringify(tri
 const inTrip = (x) => trip.some((f) => f.t === x.t && f.y === x.y);
 const plexKids = (x) => x.c === "G" || x.c === "PG";
 const plexAdult = (x) => x.c === "PG-13" || x.c === "R" || x.c === "NC-17";
+const showKids = (x) => /^(TV-Y7?(-FV)?|TV-G|TV-PG|G|PG)$/i.test(x.c || "");
+const plexKeyUrl = (key) => PX.mid && key ? `https://app.plex.tv/desktop/#!/server/${encodeURIComponent(PX.mid)}/details?key=${encodeURIComponent("/library/metadata/" + key)}` : "";
+function plexShowList() {
+  const q = norm(plexView.q);
+  const list = (PX.s || []).map((r) => onPlex(r[0], r[1], "show")).filter((x) => x
+    && (plexView.lib === "all" || x.lib === plexView.lib)
+    && (plexView.aud === "any" || (plexView.aud === "kids" ? showKids(x) : !showKids(x)))
+    && (!q || norm(x.t).includes(q)));
+  const by = { rating: (a, b) => (b.v || 0) - (a.v || 0), new: (a, b) => (b.y || 0) - (a.y || 0) || (b.v || 0) - (a.v || 0), title: (a, b) => a.t.localeCompare(b.t) };
+  return [...new Map(list.map((x) => [x.t + x.y, x])).values()].sort(by[plexView.sort] || by.rating);
+}
+function showTile(x) {
+  const next = plexDeck.find((d) => d.episode && norm(d.title) === norm(x.t));
+  const flag = next ? `<span class="flag">Next: ${esc(next.episode)}</span>` : "";
+  const url = plexKeyUrl(x.key) || searchUrl_(x.t);
+  return `<div class="ptile">
+    <div class="art">${poster(x.t)}${flag}${x.v ? `<span class="score" title="Plex audience score">★ ${esc(x.v.toFixed(1))}</span>` : ""}</div>
+    <div class="tt">${esc(x.t)}</div>
+    <div class="sub"><span class="mono">${esc([x.y, x.eps ? x.eps + " episodes" : ""].filter(Boolean).join(" · "))}</span>${x.c ? `<span class="cert ${showKids(x) ? "fam" : ""}">${esc(x.c)}</span>` : ""}</div>
+    <div class="sub">${[esc(String(x.g || "").split("/").slice(0, 2).join(" · ")), PX.live && x.key ? `<a class="trailer-link inline" href="${esc(trailerUrl(x.t + " TV series", x.y))}" target="_blank" rel="noopener" data-pxtrailer="${esc(x.key)}" aria-label="Watch the trailer for ${esc(x.t)}">▶ Trailer</a>` : ""].filter(Boolean).join(" · ")}</div>
+    <div class="acts"><a class="plex-link" href="${esc(url)}" target="_blank" rel="noopener" aria-label="Open ${esc(x.t)} on Plex">${ICON_PLAY_PX}${next ? "Next episode" : "Play on Plex"}</a></div>
+  </div>`;
+}
+const searchUrl_ = (title) => `https://app.plex.tv/desktop/#!/search?query=${encodeURIComponent(title)}`;
 function plexList() {
   const q = norm(plexView.q);
   const list = (PX.m || []).map((r) => onPlex(r[0], r[1], "movie")).filter((x) => x
@@ -1580,6 +1616,8 @@ function plexList() {
   const by = { rating: (a, b) => b.v - a.v, new: (a, b) => b.y - a.y || b.v - a.v, short: (a, b) => a.r - b.r, title: (a, b) => a.t.localeCompare(b.t) };
   return [...new Map(list.map((x) => [x.t + x.y, x])).values()].sort(by[plexView.sort] || by.rating);
 }
+const canWatch = (x) => PX.live && x && x.key && x.kind === "movie" && /(^|\.)keyissue\.app$/.test(location.hostname);
+const hereLink = (x) => canWatch(x) ? `<a class="trailer-link inline" href="${esc(plexUrl(x.t, x.y))}" data-pxwatch="${esc(x.key)}" data-t="${esc(x.t)}" aria-label="Watch ${esc(x.t)} here">▶ Watch here</a>` : "";
 function plexTile(x) {
   const found = inPile(x.t);
   const add = found ? `<span class="in-pile">${found.status === "watched" ? "Watched" : "In the pile"}</span>`
@@ -1589,7 +1627,7 @@ function plexTile(x) {
     <div class="art">${poster(x.t)}${flag}${x.v ? `<span class="score" title="Plex audience score">★ ${esc(x.v.toFixed(1))}</span>` : ""}</div>
     <div class="tt">${esc(x.t)}</div>
     <div class="sub"><span class="mono">${esc([x.y, x.r ? x.r + "m" : ""].filter(Boolean).join(" · "))}</span>${x.c ? `<span class="cert ${plexKids(x) ? "fam" : ""}">${esc(x.c)}</span>` : ""}</div>
-    <div class="sub">${[esc(String(x.g || "").split("/").slice(0, 2).join(" · ")), trailerLink(x.t, x.y, "inline")].filter(Boolean).join(" · ")}</div>
+    <div class="sub">${[esc(String(x.g || "").split("/").slice(0, 2).join(" · ")), trailerLink(x.t, x.y, "inline"), hereLink(x)].filter(Boolean).join(" · ")}</div>
     <div class="acts">${plexView.trip ? `<button type="button" class="small trip-add" data-act="px-trip" data-t="${esc(x.t)}" data-y="${esc(x.y || "")}" data-r="${esc(x.r || "")}" aria-pressed="${inTrip(x)}">${inTrip(x) ? "✓ Packed" : "Pack"}</button>` : add}<a class="plex-link icon" href="${esc(plexUrl(x.t, x.y))}" target="_blank" rel="noopener" aria-label="Play ${esc(x.t)} on Plex" title="Play on Plex">${ICON_PLAY_PX}</a></div>
   </div>`;
 }
@@ -1615,28 +1653,30 @@ function plexSetup() {
 }
 function renderPlex() {
   const el = $("#plex"); if (!el) return;
-  const list = plexList();
+  const shows = plexView.kind === "shows";
+  const list = shows ? plexShowList() : plexList();
   const libs = PLEX_LIBS();
   const chip = (act, val, cur, label) => `<button type="button" class="chip small" data-act="${act}" data-v="${esc(val)}" aria-pressed="${cur === val}">${esc(label)}</button>`;
-  el.innerHTML = `<div class="filters">
-      <div class="grp"><span class="label">Library</span><div class="chips" role="group" aria-label="Plex library">${chip("px-lib", "all", plexView.lib, "All movies")}${libs.map((l) => chip("px-lib", l, plexView.lib, l)).join("")}</div></div>
+  el.innerHTML = `${(PX.s || []).length ? `<div class="chips" role="group" aria-label="Films or shows" style="margin-bottom:10px">${chip("px-kind", "films", plexView.kind, "🎬 Films")}${chip("px-kind", "shows", plexView.kind, "📺 Shows")}</div>` : ""}<div class="filters">
+      <div class="grp"><span class="label">Library</span><div class="chips" role="group" aria-label="Plex library">${chip("px-lib", "all", plexView.lib, shows ? "All shows" : "All movies")}${libs.map((l) => chip("px-lib", l, plexView.lib, l)).join("")}</div></div>
       <div class="grp"><span class="label">Who's it for?</span><div class="chips" role="group" aria-label="Age rating">${chip("px-aud", "any", plexView.aud, "Anyone")}${chip("px-aud", "kids", plexView.aud, "Kids (G & PG)")}${chip("px-aud", "adult", plexView.aud, "Grown-ups (PG-13 and up)")}</div></div>
-      <div class="grp"><span class="label">Sort</span><div class="chips" role="group" aria-label="Sort">${PLEX_SORTS.map(([k, l]) => chip("px-sort", k, plexView.sort, l)).join("")}</div></div>
-      ${Object.keys(plexSeen).length ? `<div class="grp"><span class="label">Hide what they've seen</span><div class="chips" role="group" aria-label="Hide films this person has watched on Plex">${chip("px-who", "", plexView.who, "Nobody")}${Object.keys(plexSeen).sort().map((a) => chip("px-who", a, plexView.who, a)).join("")}</div></div>` : ""}
-      <div class="row"><input type="search" id="px-q" placeholder="Search our Plex" value="${esc(plexView.q)}" aria-label="Search our Plex" style="flex:1;min-width:0"><label class="check" style="margin:0"><input type="checkbox" id="px-fresh" ${plexView.fresh ? "checked" : ""}> Not seen yet</label></div>
+      <div class="grp"><span class="label">Sort</span><div class="chips" role="group" aria-label="Sort">${PLEX_SORTS.filter(([k]) => !shows || k !== "short").map(([k, l]) => chip("px-sort", k, plexView.sort, l)).join("")}</div></div>
+      ${!shows && Object.keys(plexSeen).length ? `<div class="grp"><span class="label">Hide what they've seen</span><div class="chips" role="group" aria-label="Hide films this person has watched on Plex">${chip("px-who", "", plexView.who, "Nobody")}${Object.keys(plexSeen).sort().map((a) => chip("px-who", a, plexView.who, a)).join("")}</div></div>` : ""}
+      <div class="row"><input type="search" id="px-q" placeholder="Search our Plex" value="${esc(plexView.q)}" aria-label="Search our Plex" style="flex:1;min-width:0">${shows ? "" : `<label class="check" style="margin:0"><input type="checkbox" id="px-fresh" ${plexView.fresh ? "checked" : ""}> Not seen yet</label>`}</div>
     </div>
-    <div class="row between"><p class="source" style="margin:0">${list.length} ${list.length === 1 ? "film" : "films"} on our Plex</p><div class="row">${list.length && !state.readOnly && !plexView.trip ? `<button type="button" class="small" data-act="px-random">Pick one at random</button>` : ""}<button type="button" class="small" data-act="px-tripmode" aria-pressed="${plexView.trip}">🚗 Road trip pack</button></div></div>
-    ${plexView.trip ? tripBar() : ""}
-    ${list.length ? `<div class="pgrid">${list.slice(0, plexView.n).map(plexTile).join("")}</div>${list.length > plexView.n ? `<div class="refresh-row"><button type="button" class="ghost small" data-act="px-more">Show more</button></div>` : ""}`
+    <div class="row between"><p class="source" style="margin:0">${list.length} ${shows ? (list.length === 1 ? "show" : "shows") : (list.length === 1 ? "film" : "films")} on our Plex</p>${shows ? "" : `<div class="row">${list.length && !state.readOnly && !plexView.trip ? `<button type="button" class="small" data-act="px-random">Pick one at random</button>` : ""}<button type="button" class="small" data-act="px-tripmode" aria-pressed="${plexView.trip}">🚗 Road trip pack</button></div>`}</div>
+    ${!shows && plexView.trip ? tripBar() : ""}
+    ${list.length ? `<div class="pgrid">${list.slice(0, plexView.n).map(shows ? showTile : plexTile).join("")}</div>${list.length > plexView.n ? `<div class="refresh-row"><button type="button" class="ghost small" data-act="px-more">Show more</button></div>` : ""}`
       : `<div class="empty"><p>Nothing on our Plex fits that. Try another library or age group.</p></div>`}
     <p class="source">${PX.live ? `Live from the family Plex server${PX.stale ? " (last time it answered)" : ""}. The unwatched films in the pile are also a "Movie night pile" playlist on Plex, and "We watched it" marks a film watched there too.` : `From the family Plex server, copied ${esc(fmtDate(PX.asof) || "recently")}. New films show up here after the next refresh.`} ▶ opens the film in Plex so you can play it on the TV.</p>
     ${plexSetup()}`;
   const qi = $("#px-q"); qi.oninput = (e) => { plexView.q = e.target.value; plexView.n = 24; const pos = e.target.selectionStart; renderPlex(); const n = $("#px-q"); n.focus(); n.setSelectionRange(pos, pos); };
-  $("#px-fresh").onchange = (e) => { plexView.fresh = e.target.checked; plexView.n = 24; renderPlex(); };
+  const fr = $("#px-fresh"); if (fr) fr.onchange = (e) => { plexView.fresh = e.target.checked; plexView.n = 24; renderPlex(); };
 }
 document.addEventListener("click", (e) => {
   const b = e.target.closest("[data-act^='px-']"); if (!b) return;
   switch (b.dataset.act) {
+    case "px-kind": plexView.kind = b.dataset.v; plexView.lib = "all"; if (plexView.kind === "shows" && plexView.sort === "short") plexView.sort = "rating"; plexView.trip = false; break;
     case "px-lib": plexView.lib = b.dataset.v; break;
     case "px-aud": plexView.aud = b.dataset.v; break;
     case "px-sort": plexView.sort = b.dataset.v; break;
@@ -1709,6 +1749,57 @@ document.addEventListener("click", (e) => {
     })
     .catch(() => { if (el.isConnected) fallback("Plex has no trailer for this one."); });
 });
+// Watch a whole film here: our Plex turns it into a stream (HLS) and keyissue.app passes it on.
+// Safari plays that natively; other browsers use hls.js. Progress goes back to Plex so it counts as watched.
+let filmKey = null, filmTimer = null;
+const HLS_JS = "https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.13/hls.min.js";
+const loadHlsJs = () => window.Hls ? Promise.resolve() : new Promise((ok, no) => { const s = document.createElement("script"); s.src = HLS_JS; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
+function reportFilm(v, st) {
+  if (!filmKey || !v || !isFinite(v.duration)) return;
+  fetch("/_kia/plex/timeline", { method: "POST", credentials: "same-origin", keepalive: true, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key: filmKey, time: Math.round(v.currentTime * 1000), duration: Math.round(v.duration * 1000), state: st }) }).catch(() => {});
+}
+function closeFilm() {
+  const el = $("#filmplayer");
+  if (el) { const v = el.querySelector("video"); if (v) { reportFilm(v, "stopped"); v.pause(); v.removeAttribute("src"); v.load?.(); } el._hls?.destroy?.(); el.remove(); }
+  clearInterval(filmTimer); filmKey = null;
+}
+function pauseFilm() { const v = $("#filmplayer video"); if (v && !v.paused) { v.pause(); return true; } return false; }
+document.addEventListener("click", (e) => {
+  if (e.target.closest("[data-act=film-close]")) { closeFilm(); return; }
+  const b = e.target.closest("[data-pxwatch]"); if (!b) return;
+  e.preventDefault();
+  const key = b.dataset.pxwatch, title = b.dataset.t || "Film", plexPage = b.href;
+  const again = filmKey === key; closeFilm(); if (again) return;
+  closeTrailer();
+  filmKey = key;
+  const anchor = b.closest(".ptile") || b.closest(".row") || b.parentElement;
+  const el = document.createElement("div"); el.id = "filmplayer"; el.className = "film-box"; el.setAttribute("role", "region"); el.setAttribute("aria-label", `Watching ${title}`);
+  const head = `<div class="row between"><strong>▶ ${esc(title)}</strong><button type="button" class="ghost small" data-act="film-close" aria-label="Stop watching">✕ Close</button></div>`;
+  const fail = (why) => { el._hls?.destroy?.(); el.innerHTML = `${head}<p class="source" style="color:inherit">${esc(why)}</p><div class="row"><a class="small primary" href="${esc(plexPage)}" target="_blank" rel="noopener">▶ Open in Plex instead</a></div>`; clearInterval(filmTimer); filmKey = null; };
+  el.innerHTML = `${head}<p class="source" style="color:inherit">Getting the film ready… this can take up to half a minute.</p>`;
+  anchor.after(el); el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  const src = `/_kia/plex/hls/start.m3u8?key=${encodeURIComponent(key)}`;
+  const go = async () => {
+    el.innerHTML = `${head}<video controls autoplay playsinline></video><p class="source" style="color:inherit">Streamed from our Plex at 720p, so it can be a little soft. Seeking far ahead isn't supported. <a href="${esc(plexPage)}" target="_blank" rel="noopener" style="color:inherit">Open in Plex</a> for the full picture.</p>`;
+    const v = el.querySelector("video");
+    v.onended = () => reportFilm(v, "stopped");
+    v.onpause = () => reportFilm(v, "paused");
+    v.onplaying = () => reportFilm(v, "playing");
+    v.onerror = () => { if (!el._hls) fail("This film won't play here."); };
+    clearInterval(filmTimer); filmTimer = setInterval(() => { if (!v.paused) reportFilm(v, "playing"); }, 30000);
+    if (v.canPlayType("application/vnd.apple.mpegurl")) { v.src = src; }
+    else {
+      try { await loadHlsJs(); } catch { return fail("This browser can't play it here."); }
+      if (!window.Hls?.isSupported()) return fail("This browser can't play it here.");
+      const h = new Hls({ maxBufferLength: 30 }); el._hls = h;
+      h.on(Hls.Events.ERROR, (_, d) => { if (d.fatal) fail("Plex couldn't start the film. Is the server on?"); });
+      h.loadSource(src); h.attachMedia(v);
+    }
+    v.play?.().catch(() => {});
+  };
+  go();
+});
+
 const PNAME = { "Disney Plus": "Disney+", "Amazon Prime Video": "Prime Video", "Netflix Kids": "Netflix", "Apple TV Store": "Apple TV", "Amazon Video": "Prime Video Store", "Google Play Movies": "Google Play", "Neon TV": "Neon" };
 const pname = (n) => PNAME[n] || n;
 const uniq = (a) => [...new Set(a)];
@@ -2071,6 +2162,26 @@ const SNACKS = ["🍿 Popcorn", "🥤 Drinks", "🍫 Treats", "🛋️ Blankets 
 const mn = (() => { try { return { time: "19:00", done: {}, ...JSON.parse(localStorage.getItem(MN_KEY) || "{}") }; } catch { return { time: "19:00", done: {} }; } })();
 const saveMn = () => { try { localStorage.setItem(MN_KEY, JSON.stringify(mn)); } catch {} };
 let mnTimer = null;
+// Bedtime timer: when it's up, pause the film in this page and any TV that Plex says is playing.
+async function bedtimeFire() {
+  mn.bedAt = 0; saveMn();
+  let did = pauseFilm();
+  try {
+    const d = await (await fetch("/_kia/dashboard", { credentials: "same-origin", headers: { Accept: "application/json" } })).json();
+    for (const x of (Array.isArray(d.now) ? d.now : []).filter((n) => n.state === "playing" && n.playerId)) {
+      const r = await fetch("/_kia/plex/pause", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ player: x.playerId }) }).catch(() => null);
+      if (r && r.ok) did = true;
+    }
+  } catch {}
+  toast(did ? "Paused. Time for bed 😴" : "Bedtime! (Couldn't pause the TV, use the remote)");
+  if ($("#mn-bed")) renderMovieNight();
+}
+setInterval(() => {
+  if (!mn.bedAt) return;
+  const left = mn.bedAt - Date.now();
+  if (left <= 0) bedtimeFire();
+  else if (left <= 5 * 60000 && !mn.bedWarned) { mn.bedWarned = true; saveMn(); toast("5 minutes until the bedtime pause 😴"); }
+}, 5000);
 function renderMovieNight() {
   const next = state.movies.find((m) => m.status === "next");
   const el = $("#movienight"); if (!el) return;
@@ -2082,6 +2193,7 @@ function renderMovieNight() {
     const ms = when - Date.now();
     if (ms <= 0) { c.textContent = ms > -3 * 3600e3 ? "It's movie time! 🎬" : "Hope it was a good one"; return; }
     const h = Math.floor(ms / 3600e3), m = Math.floor((ms % 3600e3) / 60e3), sec = Math.floor((ms % 60e3) / 1000);
+    const bd = $("#mn-bed"); if (bd) bd.textContent = mn.bedAt ? (mn.bedAt > Date.now() ? `Pausing at ${clock(new Date(mn.bedAt))} (${Math.max(1, Math.ceil((mn.bedAt - Date.now()) / 60000))} min)` : "Time's up") : "";
     c.textContent = h >= 24 ? `${Math.floor(h / 24)} day${h >= 48 ? "s" : ""} ${h % 24} h to go` : `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
   };
   const p = picker(), by = crewById(next.pickedBy);
@@ -2093,8 +2205,9 @@ function renderMovieNight() {
     <label class="f" style="color:#fff">Starts at <input type="time" id="mn-time" value="${esc(mn.time)}" style="width:auto"></label>
     <div class="sub mono" style="color:rgb(255 255 255 / .75)">${esc([next.runtime || d.r ? (next.runtime || d.r) + " min" : "", d.nz ? "NZ " + d.nz : d.c || "", (next.runtime || d.r) ? "finishes about " + clock(new Date(when.getTime() + (next.runtime || d.r) * 60000)) : ""].filter(Boolean).join(" · "))}</div>
     ${d.t ? whereLine(d, true) : onPlex(next.title, next.year, "movie") ? `<div class="where">${ICON_PLAY}${PLEX_NAME}</div>` : ""}
-    <div class="row" style="justify-content:center">${onPlex(next.title, next.year, "movie") ? plexLink(next.title, next.year) : ""}${trailerLink(next.title, next.year || d.y, "small")}</div>
+    <div class="row" style="justify-content:center">${onPlex(next.title, next.year, "movie") ? plexLink(next.title, next.year) : ""}${trailerLink(next.title, next.year || d.y, "small")}${(() => { const x = onPlex(next.title, next.year, "movie"); return x ? hereLink(x).replace("inline", "small") : ""; })()}</div>
     ${themeBlock(next)}
+    ${PX.live ? `<div class="bed"><span class="label">Bedtime timer</span><div class="chips" role="group" aria-label="Pause the film after">${[30, 45, 60, 90].map((m) => `<button type="button" class="chip small" data-act="mn-bed" data-m="${m}" aria-pressed="${!!mn.bedAt && mn.bedMin === m}">${m} min</button>`).join("")}<button type="button" class="chip small" data-act="mn-bed" data-m="0" aria-pressed="${!mn.bedAt}">Off</button></div><div class="sub mono" id="mn-bed" style="color:rgb(255 255 255 / .75)"></div><span class="source" style="color:rgb(255 255 255 / .6)">Pauses the film on the TV (and here) when the time is up. Keep this page open.</span></div>` : ""}
     <div class="snacks"><span class="label">Get ready</span>${SNACKS.map((x, i) => `<label class="${mn.done[i] ? "done" : ""}"><input type="checkbox" data-act="mn-snack" data-i="${i}" ${mn.done[i] ? "checked" : ""}><span>${x}</span></label>`).join("")}</div>
   </div>`;
   $("#mn-time").onchange = (e) => { mn.time = e.target.value || "19:00"; saveMn(); renderMovieNight(); };
@@ -2141,6 +2254,7 @@ document.addEventListener("click", async (e) => {
   switch (b.dataset.act) {
     case "mn-open": openMovieNight(); break;
     case "mn-close": clearInterval(mnTimer); $("#movienight")?.remove(); break;
+    case "mn-bed": { const m = Number(b.dataset.m); mn.bedMin = m; mn.bedAt = m ? Date.now() + m * 60000 : 0; mn.bedWarned = false; saveMn(); renderMovieNight(); toast(m ? `Film pauses in ${m} minutes 😴` : "Bedtime timer off"); break; }
     case "mn-snack": mn.done[b.dataset.i] = b.checked; saveMn(); b.closest("label").classList.toggle("done", b.checked); break;
     case "kp-open": openKids(); break;
     case "kp-close": $("#kidpicks")?.remove(); break;
@@ -2159,7 +2273,7 @@ document.addEventListener("click", async (e) => {
     }
   }
 });
-document.addEventListener("keydown", (e) => { if (e.key === "Escape") { clearInterval(mnTimer); $("#movienight")?.remove(); $("#kidpicks")?.remove(); closeTrailer(); } });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") { clearInterval(mnTimer); $("#movienight")?.remove(); $("#kidpicks")?.remove(); $("#recap")?.remove(); closeTrailer(); } });
 
 /* ---------- Family stats (History tab) ---------- */
 function renderStats() {
@@ -2187,8 +2301,50 @@ function renderStats() {
     ${best ? `<div class="mstat"><b style="font-size:1rem">${esc(best.title)}</b><span>top rated (${best.rating} ★)</span></div>` : ""}
     <div class="mstat"><b>${done.length}</b><span>weekend outings done</span></div>
     <div class="mstat"><b>${dcSeen} / ${DC_ANIMATED.length}</b><span>DC animated films seen</span></div>
+  </div>
+  ${thisYear.length ? `<div class="refresh-row"><button type="button" class="primary" data-act="recap-open">🎞️ Our year in movies</button></div>` : ""}`;
+}
+/* ---------- Our year in movies (a recap overlay) ---------- */
+function renderRecap() {
+  const el = $("#recap"); if (!el) return;
+  const yr = String(new Date().getFullYear());
+  const watched = state.movies.filter((m) => m.status === "watched" && String(m.watchedOn || "").startsWith(yr)).sort((a, b) => String(a.watchedOn).localeCompare(String(b.watchedOn)));
+  const run = (m) => Number(m.runtime) || WATCH_INFO[norm(m.title)]?.r || 0;
+  const mins = watched.reduce((a, m) => a + run(m), 0);
+  const rated = watched.filter((m) => m.rating);
+  const top = rated.slice().sort((a, b) => b.rating - a.rating || String(b.watchedOn).localeCompare(String(a.watchedOn)))[0];
+  const longest = watched.slice().sort((a, b) => run(b) - run(a))[0];
+  const months = {}; watched.forEach((m) => { const k = String(m.watchedOn).slice(5, 7); months[k] = (months[k] || 0) + 1; });
+  const busy = Object.entries(months).sort((a, b) => b[1] - a[1])[0];
+  const MONTH = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const picks = {}; watched.forEach((m) => { if (m.pickedBy && crewById(m.pickedBy)) (picks[m.pickedBy] ||= []).push(m.rating || 0); });
+  const pickList = Object.entries(picks).map(([id, r]) => { const rr = r.filter(Boolean); return [crewById(id).name, rr.length ? rr.reduce((a, b) => a + b, 0) / rr.length : 0, r.length]; }).sort((a, b) => b[1] - a[1] || b[2] - a[2]);
+  const last = watched[watched.length - 1];
+  const gc = {}; watched.forEach((m) => (WATCH_INFO[norm(m.title)]?.g || []).forEach((g) => (gc[g] = (gc[g] || 0) + 1)));
+  const topG = Object.entries(gc).sort((a, b) => b[1] - a[1]).slice(0, 2).map(([g]) => GENRES[g]).filter(Boolean);
+  const px = plexStats && plexStats.total ? plexStats : null;
+  el.innerHTML = `<button type="button" class="x" data-act="recap-close" aria-label="Close">✕</button><div class="box recap">
+    <span class="label">Our year in movies · ${esc(yr)}</span>
+    <div class="big">${watched.length} ${watched.length === 1 ? "film" : "films"}</div>
+    <p>${hm(mins)} on the couch together</p>
+    ${top ? `<div class="sec"><span class="label">Top rated</span>${poster(top.title)}<h2>${esc(top.title)}</h2><p>${"★".repeat(top.rating)} from the family</p></div>` : ""}
+    ${busy ? `<div class="sec"><span class="label">Busiest month</span><p><strong>${esc(MONTH[Number(busy[0]) - 1] || busy[0])}</strong>, ${busy[1]} ${busy[1] === 1 ? "film" : "films"}</p></div>` : ""}
+    ${pickList.length ? `<div class="sec"><span class="label">Who picked well</span>${pickList.map(([n, a, c]) => `<p><strong>${esc(n)}</strong> · ${c} ${c === 1 ? "pick" : "picks"}${a ? ` · ${a.toFixed(1)} ★ average` : ""}</p>`).join("")}</div>` : ""}
+    ${longest && run(longest) ? `<div class="sec"><span class="label">Longest sit</span><p><strong>${esc(longest.title)}</strong>, ${hm(run(longest))}</p></div>` : ""}
+    ${topG.length ? `<div class="sec"><span class="label">Favourite genres</span><p>${esc(topG.join(" and "))}</p></div>` : ""}
+    ${px ? `<div class="sec"><span class="label">On Plex</span>${px.people.map((p) => `<p><strong>${esc(p.name)}</strong> · ${hm(p.minutes)} · ${p.films} ${p.films === 1 ? "film" : "films"}, ${p.episodes} ${p.episodes === 1 ? "episode" : "episodes"}</p>`).join("")}${px.topShows.length ? `<p>Most watched show: <strong>${esc(px.topShows[0].title)}</strong> (${px.topShows[0].count})</p>` : ""}</div>` : ""}
+    ${last ? `<div class="sec"><span class="label">Last movie night</span><p><strong>${esc(last.title)}</strong>, ${esc(fmtDate(last.watchedOn) || last.watchedOn)}${last.rating ? ` · ${last.rating} ★` : ""}${last.pickedBy && crewById(last.pickedBy) ? ` · ${esc(crewById(last.pickedBy).name)}'s pick` : ""}</p></div>` : ""}
   </div>`;
 }
+function openRecap() {
+  $("#recap")?.remove(); const el = document.createElement("div"); el.id = "recap"; el.className = "overlay"; el.setAttribute("role", "dialog"); el.setAttribute("aria-label", "Our year in movies");
+  document.body.appendChild(el); renderRecap();
+  if (!plexStats && /(^|\.)keyissue\.app$/.test(location.hostname)) fetch("/_kia/plex/stats", { credentials: "same-origin", headers: { Accept: "application/json" } }).then((r) => r.ok ? r.json() : null).then((d) => { if (d) { plexStats = d; renderRecap(); } }).catch(() => {});
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-act=recap-open], [data-act=recap-close]"); if (!b) return;
+  if (b.dataset.act === "recap-open") openRecap(); else $("#recap")?.remove();
+});
 
 /* ---------- Who watched what on Plex (History tab), from Plex's webhooks ---------- */
 let plexStats = null, plexStatsAt = 0;
